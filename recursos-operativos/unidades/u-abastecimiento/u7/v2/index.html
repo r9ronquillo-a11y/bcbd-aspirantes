@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Unidad U-7 v2 (Vista superior)</title>
+  <link rel="stylesheet" href="../../../../css/styles.css">
+  <style>
+    /* Forzar estilos del modal aquí para garantizar overlay consistente */
+    #org-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999}
+    #org-modal.org-modal--open{display:flex}
+    #org-modal .org-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,0.6)}
+    #org-modal .org-modal-panel{position:relative;background:white;border-radius:12px;padding:20px;width:360px;max-width:94%;box-shadow:0 20px 60px rgba(15,23,42,0.2);z-index:10}
+    #org-modal .org-modal-close{position:absolute;right:10px;top:8px;background:transparent;border:0;font-size:22px;cursor:pointer}
+    .u7-wrap{max-width:900px;margin:20px auto;position:relative}
+    .u7-img{display:block;width:100%;height:auto;border:1px solid #ddd}
+    .compartment{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(220,20,60,0.95);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:transform .12s,box-shadow .12s}
+    .compartment:hover{transform:scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,0.25)}
+    #infoBox{max-width:900px;margin:12px auto;padding:12px;border:1px solid #eee;background:#fafafa}
+  </style>
+</head>
+
+<body>
+  <div id="header"></div>
+
+  <h1>Unidad U7 - Vista superior (v2 experimental)</h1>
+  <p>Versión temporal: overlay de puertas/compartimientos sobre una foto cenital.</p>
+
+  <div class="u7-wrap" id="u7wrap">
+    <!-- Copia aquí la imagen cenital como 'u7-top.jpg' en la misma carpeta v2 -->
+    <img src="u7-top.jpg" alt="U7 vista superior" class="u7-img" id="u7img">
+
+    <!-- Botones/íconos de ejemplo (posiciones en %; ajusta según tu imagen) -->
+    <div class="compartment" data-name="C-1" style="top:6%;left:12%">1</div>
+    <div class="compartment" data-name="C-2" style="top:24%;left:12%">2</div>
+    <div class="compartment" data-name="C-3" style="top:44%;left:12%">3</div>
+    <div class="compartment" data-name="C-4" style="top:62%;left:12%">4</div>
+    <div class="compartment" data-name="C-5" style="top:82%;left:12%">5</div>
+
+    <div class="compartment" data-name="C-6" style="top:82%;right:12%">6</div>
+    <div class="compartment" data-name="C-7" style="top:62%;right:12%">7</div>
+    <div class="compartment" data-name="C-8" style="top:44%;right:12%">8</div>
+    <div class="compartment" data-name="C-9" style="top:24%;right:12%">9</div>
+    <div class="compartment" data-name="C-10" style="top:8%;right:12%">10</div>
+  </div>
+
+  <div id="infoBox">
+    <strong>Detalle:</strong>
+    <div id="compDetail">Haz clic en un compartimiento.</div>
+  </div>
+
+  <div id="footer"></div>
+
+  <!-- Modal (usa la misma estructura que institucion/index.html) -->
+  <div id="org-modal" class="org-modal" aria-hidden="true">
+    <div class="org-modal-backdrop" data-close></div>
+    <div class="org-modal-panel" role="dialog" aria-modal="true" tabindex="-1">
+      <button class="org-modal-close" data-close aria-label="Cerrar">×</button>
+      <div class="org-modal-photo">U7</div>
+      <h4 class="org-modal-role">Compartimiento</h4>
+      <p class="org-modal-rank" id="org-modal-rank"></p>
+      <h3 class="org-modal-name" id="org-modal-name">Nombre</h3>
+      <p class="org-modal-desc" id="org-modal-desc">Descripción</p>
+    </div>
+  </div>
+
+  <script>
+    // Datos copiados desde js/main.js (v1) — mapeo comp1..comp11
+    const datos = {
+      comp1: [ { nombre: "Herramientas de uso común", uso: "Facilitan la respuesta rápida a emergencias y maniobras básicas." } ],
+      comp2: [ { nombre: "Extintor PQS", uso: "Apagar fuegos de líquidos, eléctricos y combustibles." }, { nombre: "Extintor CO₂", uso: "Ideal para fuegos eléctricos y líquidos inflamables, no deja residuo." }, { nombre: "Extintor de agua", uso: "Para fuegos de materiales sólidos, como madera y papel." }, { nombre: "F500 (espuma)", uso: "Controla fuego de líquidos inflamables con mayor eficiencia." }, { nombre: "Eductor de espuma", uso: "Mezcla agua y concentrado de espuma para generar espuma extintora." } ],
+      comp3: [ { nombre: "Cerrado", uso: "Cerrado." } ],
+      comp4: [ { nombre: "Extractor de humo", uso: "Evacúa humo de espacios cerrados, mejora visibilidad y ventilación." } ],
+      comp5: [ { nombre: "Mototrozadora", uso: "Corte de metal o puertas en rescates vehiculares." }, { nombre: "Tacos de escalerilla y 4x4", uso: "Estabilización de vehículos o estructuras durante rescates." }, { nombre: "Cuñas", uso: "Soporte seguro de objetos o víctimas durante rescates." } ],
+      comp6: [ { nombre: "COMBITOOL", uso: "Herramienta multifunción para rescates vehiculares (corte, expansión, compresión)." }, { nombre: "RAM", uso: "Pistón hidráulico para separar, levantar o abrir estructuras atrapadas." } ],
+      comp7: [ { nombre: "Herramientas de uso común (lado opuesto)", uso: "Facilitan la respuesta rápida a emergencias y maniobras básicas." } ],
+      comp8: [ { nombre: "Tramos de 2.5'", uso: "Permite ataque de agua en incendios y conexión rápida." }, { nombre: "Conos medianos", uso: "Delimitación de zona de trabajo." } ],
+      comp9: [ { nombre: "Tramos de 2.5'", uso: "Permite ataque de agua en incendios y conexión rápida." }, { nombre: "Conos medianos", uso: "Delimitación de zona de trabajo." } ],
+      comp10: [ { nombre: "Conos altos", uso: "Señalización de zona de emergencia." }, { nombre: "Combustible", uso: "Para equipos móviles como motobombas o generadores." } ],
+      comp11: [ { nombre: "Motor hidráulico y mangueras hidráulicas", uso: "Equipo hidráulico para rescates." }, { nombre: "Detergentes", uso: "Limpieza de equipos después de incidentes." } ]
+    };
+
+    // Función que renderiza la lista en el modal y abre the modal (usa estructura org-modal)
+    let modal = document.getElementById('org-modal');
+    // Si el modal está dentro de algún contenedor que aplica transform/overflow,
+    // muévelo al body para garantizar que `position: fixed` y z-index funcionen.
+    if (modal && modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+      // re-query to ensure references stay valid
+      modal = document.getElementById('org-modal');
+    }
+    const modalRole = modal.querySelector('.org-modal-role');
+    const modalRank = modal.querySelector('.org-modal-rank');
+    const modalName = modal.querySelector('.org-modal-name');
+    const modalDesc = modal.querySelector('.org-modal-desc');
+    const modalPanel = modal.querySelector('.org-modal-panel');
+
+    // ensure modal has base inline positioning in case stylesheet isn't loaded
+    if (modal) {
+      modal.style.position = modal.style.position || 'fixed';
+      modal.style.inset = modal.style.inset || '0';
+      modal.style.display = modal.style.display || 'none';
+    }
+
+    function openModalWithContent(title, html) {
+      if (!modal) return;
+      modalRole && (modalRole.textContent = title);
+      modalRank && (modalRank.textContent = '');
+      modalName && (modalName.textContent = '');
+      modalDesc && (modalDesc.innerHTML = html);
+      modal.setAttribute('aria-hidden','false');
+      modal.classList.add('org-modal--open');
+      // force inline display and positioning so it reliably overlays content
+      modal.style.display = 'flex';
+      modal.style.zIndex = '9999';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      if (modalPanel) modalPanel.focus();
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      if (!modal) return;
+      modal.setAttribute('aria-hidden','true');
+      modal.classList.remove('org-modal--open');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function renderListadoModal(key, label) {
+      const herramientas = datos[key] || [];
+      if (!herramientas.length) {
+        openModalWithContent(label, '<em>Sin datos disponibles.</em>');
+        return;
+      }
+      const html = '<ul>' + herramientas.map(h => `<li><strong>${h.nombre}</strong><div style="color:#6b7280;margin-top:6px;">${h.uso}</div></li>`).join('') + '</ul>';
+      openModalWithContent(label, html);
+    }
+
+    // Conectar overlays con datos: convertir 'C-1' → 'comp1'
+    document.querySelectorAll('.compartment').forEach(function(el){
+      el.addEventListener('click', function(){
+        const label = el.getAttribute('data-name') || el.textContent;
+        const idx = (label.match(/C-(\d+)/) || [])[1];
+        const key = idx ? ('comp' + idx) : null;
+        if (key) renderListadoModal(key, label);
+
+        // visual feedback
+        document.querySelectorAll('.compartment').forEach(c => c.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)');
+        el.style.boxShadow = '0 12px 36px rgba(0,0,0,0.35)';
+        el.style.transform = 'scale(1.08)';
+        setTimeout(() => el.style.transform = '', 220);
+      });
+    });
+
+    // cerrar modal por botones con data-close, backdrop click o ESC
+    modal && modal.addEventListener('click', (e) => { if (e.target && e.target.dataset && e.target.dataset.close !== undefined) closeModal(); });
+    // Si se hace click fuera del panel (en cualquier parte del documento) y el modal está abierto, ciérralo
+    document.addEventListener('click', function(e){
+      if (!modal) return;
+      if (modal.getAttribute('aria-hidden') === 'true') return;
+      // si el click no está dentro del panel, cerrar
+      if (modalPanel && !modalPanel.contains(e.target)) {
+        closeModal();
+      }
+    }, true);
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+  </script>
+
+  <script src="../../../../js/layout.js"></script>
+</body>
+
+</html>
