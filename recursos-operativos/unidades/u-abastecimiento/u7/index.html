@@ -14,9 +14,33 @@
     #org-modal .org-modal-close{position:absolute;right:10px;top:8px;background:transparent;border:0;font-size:22px;cursor:pointer}
     .u7-wrap{max-width:900px;margin:20px auto;position:relative}
     .u7-img{display:block;width:100%;height:auto;border:1px solid #ddd}
-    .compartment{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(220,20,60,0.95);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:transform .12s,box-shadow .12s}
+    .compartment{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(220,20,60,0.95);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:transform .12s,box-shadow .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .compartment:hover{transform:scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,0.25)}
     #infoBox{max-width:900px;margin:12px auto;padding:12px;border:1px solid #eee;background:#fafafa}
+
+    /* Responsive: mejorar objetivos táctiles y legibilidad en móviles */
+    @media (max-width: 900px) {
+      .u7-wrap{margin:12px auto}
+      /* Aumentar tamaño mínimo de los botones circulares para facilitar toque con dedo */
+      .compartment{width:64px;height:64px;font-size:18px;border-radius:50%;border-width:3px}
+      .compartment:hover{transform:scale(1.06)}
+      /* Si el punto está muy cerca del borde, mantener que no desborde demasiado */
+      .u7-img{max-width:100%}
+    }
+
+    @media (max-width: 480px) {
+      /* Modal más legible en pantallas pequeñas */
+      #org-modal .org-modal-panel{width:92%;max-width:520px;padding:18px;border-radius:14px}
+      #org-modal .org-modal-close{font-size:26px;right:8px;top:6px}
+      #org-modal .org-modal-name{font-size:1.05rem;margin-top:6px}
+      #org-modal .org-modal-desc{font-size:0.98rem;line-height:1.45;color:#374151}
+      #org-modal .org-modal-role{font-size:1rem;color:#111827}
+      /* Aumentar contrastes y espaciado en el listado interno */
+      #org-modal .org-modal-panel ul{padding-left:18px;margin:8px 0}
+      #org-modal .org-modal-panel li{margin-bottom:10px}
+      /* Aumentar zona de toque aún si el círculo aparece pequeño visualmente */
+      .compartment{width:72px;height:72px;font-size:20px}
+    }
   </style>
 </head>
 
