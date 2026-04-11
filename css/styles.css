@@ -54,6 +54,18 @@ main, .contenido { max-width: 1000px; margin: 28px auto; flex: 1; }
 .site-nav a { color:#374151; text-decoration:none; padding:6px 10px; border-radius:8px; }
 .site-nav a:hover { background:#f3f4f6; }
 
+/* Announcement / Competitions callout in header */
+.header-actions { display:flex; align-items:center; gap:12px; }
+.comp-announcement { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(180deg,#fff7ed,#fff1e6); color:#92400e; padding:8px 12px; border-radius:10px; text-decoration:none; box-shadow:0 6px 20px rgba(249,115,22,0.08); border:1px solid rgba(245,158,11,0.08); font-weight:600; }
+.comp-announcement svg { flex:0 0 auto; }
+.comp-announcement:hover { transform:translateY(-3px); box-shadow:0 14px 40px rgba(249,115,22,0.12); }
+.announce-text { font-size:13px; }
+
+@media (max-width:600px) {
+  .comp-announcement { padding:6px 10px; font-size:13px; }
+  .announce-text { display:none; }
+}
+
 /* Center header visually in middle area on small screens */
 @media (max-width:600px) {
   .site-header-inner { margin: 14px auto; }
