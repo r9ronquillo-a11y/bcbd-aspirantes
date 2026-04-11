@@ -4,6 +4,35 @@ const basePath = isGitHub
   ? "/bcbd-aspirantes/"
   : "/";
 
+// If running on GitHub Pages and the site is served at the user root (e.g. https://user.github.io/...),
+// some pages may be accessed without the repo prefix. Fix absolute asset paths dynamically so
+// links like `/css/styles.css` and `/js/*.js` point to the repo path when needed.
+function fixAbsoluteAssetPathsForGithub() {
+  if (!isGitHub) return;
+  const repoPrefix = basePath.replace(/\/$/, ''); // e.g. '/bcbd-aspirantes'
+  // If current pathname already starts with repoPrefix, nothing to do
+  if (window.location.pathname.startsWith(repoPrefix + '/') || window.location.pathname === repoPrefix) return;
+
+  // Update stylesheet links
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('/')) {
+      link.setAttribute('href', repoPrefix + href);
+    }
+  });
+
+  // Update script srcs (will re-request them)
+  document.querySelectorAll('script[src]').forEach(script => {
+    const src = script.getAttribute('src');
+    if (src && src.startsWith('/')) {
+      script.setAttribute('src', repoPrefix + src);
+    }
+  });
+}
+
+// run early to correct asset paths on pages served from user root
+try { fixAbsoluteAssetPathsForGithub(); } catch (e) { console.warn('fixAbsoluteAssetPathsForGithub failed', e); }
+
 function safePrefixHref(href) {
   if (!href) return href;
 
