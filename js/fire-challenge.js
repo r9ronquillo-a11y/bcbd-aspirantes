@@ -15,7 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (btnReglas) btnReglas.addEventListener('click', () => { hideAll(); reglas.classList.remove('hidden'); });
-  if (btnEstaciones) btnEstaciones.addEventListener('click', () => { hideAll(); estaciones.classList.remove('hidden'); });
+  if (btnEstaciones) btnEstaciones.addEventListener('click', () => {
+    hideAll();
+    estaciones.classList.remove('hidden');
+    // open modal immediately (create if needed)
+    if (!modal) {
+      modal = createStationsModal();
+      document.body.appendChild(modal);
+    }
+    modal.classList.add('open');
+  });
   if (btnParticipantes) btnParticipantes.addEventListener('click', () => { hideAll(); participantes.classList.remove('hidden'); });
 
   // Modal for estaciones
@@ -68,9 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // close behavior
+    // close behavior via backdrop and close button
     wrapper.querySelector('.stations-modal-backdrop').addEventListener('click', () => wrapper.classList.remove('open'));
     wrapper.querySelector('#close-stations').addEventListener('click', () => wrapper.classList.remove('open'));
+    // close on Escape
+    wrapper.addEventListener('keydown', (e) => { if (e.key === 'Escape') wrapper.classList.remove('open'); });
+    // also handle global Escape when modal open
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && wrapper.classList.contains('open')) wrapper.classList.remove('open'); });
 
     return wrapper;
   }
