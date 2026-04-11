@@ -5,13 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Estación #4 — Fire Challenge 2026</title>
   <script>
-    if (location.hostname.includes('github.io')) {
-      var base = document.createElement('base');
-      base.setAttribute('href','/bcbd-aspirantes/');
-      document.head.appendChild(base);
-    }
+    (function(){
+      var repoPrefix = location.hostname.includes('github.io') ? '/bcbd-aspirantes' : '';
+      var head = document.getElementsByTagName('head')[0];
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = repoPrefix + '/css/styles.css';
+      head.appendChild(link);
+      var layout = document.createElement('script'); layout.src = repoPrefix + '/js/layout.js'; layout.defer = true; head.appendChild(layout);
+      var fc = document.createElement('script'); fc.src = repoPrefix + '/js/fire-challenge.js'; fc.defer = true; head.appendChild(fc);
+    })();
   </script>
-  <link rel="stylesheet" href="../../../css/styles.css">
 </head>
 <body>
   <div id="header"></div>
@@ -28,7 +32,6 @@
     </section>
   </main>
   <div id="footer"></div>
-  <script src="../../../js/layout.js"></script>
-  <script src="../../../js/fire-challenge.js"></script>
+  
 </body>
 </html>
