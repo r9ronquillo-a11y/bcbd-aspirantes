@@ -66,6 +66,25 @@ main, .contenido { max-width: 1000px; margin: 28px auto; flex: 1; }
   .announce-text { display:none; }
 }
 
+/* Fire Challenge: navigation and stations modal */
+.competition-nav ul { list-style:none; display:flex; gap:12px; padding:0; margin:0; }
+.competition-nav .link-like { background:transparent; border:0; color:#1f2937; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600; }
+.competition-nav .link-like:hover { background:#f3f4f6; }
+.hidden { display:none; }
+.primary { background:#b71c1c; color:white; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.primary:hover { filter:brightness(0.95); }
+
+.stations-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:250; }
+.stations-modal.open { display:flex; }
+.stations-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.45); }
+.stations-modal-panel { position:relative; background:white; border-radius:12px; padding:18px; width:360px; max-width:94%; box-shadow:0 30px 80px rgba(15,23,42,0.3); z-index:10; }
+.stations-modal-panel h4 { margin-top:0; }
+.stations-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.stations-list a, .stations-list button { text-align:left; padding:10px 12px; border-radius:8px; border:1px solid #eee; background:#fff; text-decoration:none; color:#111827; cursor:pointer; }
+.stations-list a:hover, .stations-list button:hover { background:#f8fafc; }
+.station-nav { display:flex; gap:12px; justify-content:center; margin-top:18px; }
+.nav-arrow { background:#111827; color:white; border-radius:8px; padding:8px 12px; border:0; cursor:pointer; }
+
 /* Center header visually in middle area on small screens */
 @media (max-width:600px) {
   .site-header-inner { margin: 14px auto; }

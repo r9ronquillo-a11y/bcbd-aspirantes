@@ -14,13 +14,37 @@
     <section class="home-hero">
       <div class="hero-inner">
         <h1>Fire Challenge Santo Domingo 2026</h1>
-        <p class="lead">Página de preparación para Fire Challenge Santo Domingo 2026. Contenido en desarrollo.</p>
+        <p class="lead">Página de preparación para Fire Challenge Santo Domingo 2026.</p>
       </div>
     </section>
 
     <section class="overview">
-      <h2>Recursos</h2>
-      <p>Próximamente: guías, cronograma y materiales de entrenamiento.</p>
+      <h2>Secciones</h2>
+      <nav class="competition-nav">
+        <ul>
+          <li><button id="btn-reglas" class="link-like">Reglas</button></li>
+          <li><button id="btn-estaciones" class="link-like">Estaciones</button></li>
+          <li><button id="btn-participantes" class="link-like">Participantes</button></li>
+        </ul>
+      </nav>
+
+      <div id="seccion-contenido" style="margin-top:18px">
+        <article id="reglas" class="hidden">
+          <h3>Reglas</h3>
+          <p>Se detallarán las reglas oficiales y criterios de evaluación.</p>
+        </article>
+
+        <article id="estaciones" class="hidden">
+          <h3>Estaciones</h3>
+          <p>Selecciona una opción para ver las estaciones o comenzar el recorrido.</p>
+          <button id="open-stations-modal" class="primary">Abrir lista de estaciones</button>
+        </article>
+
+        <article id="participantes" class="hidden">
+          <h3>Participantes</h3>
+          <p>Listado y requisitos de los participantes.</p>
+        </article>
+      </div>
     </section>
   </main>
 
