@@ -50,5 +50,19 @@
   </main>
   <div id="footer"></div>
   
-</body>
+<script>
+// Fallback nav for estacion5
+(function(){
+  function ensureNav(){
+    try{
+      var main = document.querySelector('[data-station-index]'); if(!main) return; var idx=parseInt(main.getAttribute('data-station-index'),10); if(isNaN(idx)) return; if(document.querySelector('.station-nav')) return;
+      var prev = document.createElement('button'); prev.className='nav-arrow prev-arrow'; prev.innerHTML='<span class="arrow-icon">←</span><span class="arrow-text">Anterior</span>'; prev.disabled = idx<=1; prev.addEventListener('click', function(){ if(idx>1){ var segs=location.pathname.split('/').filter(Boolean); var estIndex = segs.findIndex(s=>s.toLowerCase()==='estaciones'); var prefix = estIndex>=0?('/'+segs.slice(0,estIndex+1).join('/')+'/'):'/Estaciones/'; location.href = prefix + 'estacion'+(idx-1) + '/index.html?recorrido=1'; }});
+      var next = document.createElement('button'); next.className='nav-arrow next-arrow'; next.innerHTML='<span class="arrow-text">Siguiente</span><span class="arrow-icon">→</span>'; next.disabled = idx>=6; next.addEventListener('click', function(){ if(idx<6){ var segs=location.pathname.split('/').filter(Boolean); var estIndex = segs.findIndex(s=>s.toLowerCase()==='estaciones'); var prefix = estIndex>=0?('/'+segs.slice(0,estIndex+1).join('/')+'/'):'/Estaciones/'; location.href = prefix + 'estacion'+(idx+1) + '/index.html?recorrido=1'; }});
+      var wrap = document.createElement('div'); wrap.className='station-nav'; wrap.appendChild(prev); wrap.appendChild(next); document.body.appendChild(wrap);
+    }catch(e){console.warn('ensureNav failed',e)}
+  }
+  if(document.readyState==='complete' || document.readyState==='interactive') ensureNav(); else document.addEventListener('DOMContentLoaded', ensureNav);
+})();
+</script>
+
 </html>

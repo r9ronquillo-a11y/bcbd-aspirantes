@@ -83,12 +83,17 @@ function tryFetchPartial(partialPath, callback) {
   // path first to avoid many 404s from deeply nested relative attempts.
   const candidates = [];
   const repoPrefix = basePath.replace(/\/$/, ''); // '/bcbd-aspirantes'
-  if (isGitHub && !window.location.pathname.startsWith(repoPrefix + '/') && window.location.pathname !== repoPrefix) {
-    candidates.push(basePath + partialPath);
-    candidates.push(partialPath);
-  } else {
-    candidates.push(partialPath);
+
+  // Always try the repo-root absolute path first when on GitHub Pages.
+  // This ensures partials living at `/partials/...` or `/bcbd-aspirantes/partials/...`
+  // are attempted before many relative fallbacks.
+  if (isGitHub) {
+    candidates.push(repoPrefix + '/' + partialPath); // /bcbd-aspirantes/partials/header.html
+    candidates.push('/' + partialPath); // /partials/header.html (user-root)
   }
+
+  // Local relative attempt
+  candidates.push(partialPath);
 
   // go up 1..maxDepth levels
   for (let i = 1; i <= maxDepth; i++) {
