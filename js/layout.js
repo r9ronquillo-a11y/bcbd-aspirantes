@@ -28,6 +28,29 @@ function fixAbsoluteAssetPathsForGithub() {
       script.setAttribute('src', repoPrefix + src);
     }
   });
+
+  // Update image/media sources and srcset so images referenced with leading
+  // slash work correctly when the site is served under a repo subpath.
+  document.querySelectorAll('img[src], source[src], video[src], audio[src]').forEach(el => {
+    const s = el.getAttribute('src');
+    if (s && s.startsWith('/')) el.setAttribute('src', repoPrefix + s);
+  });
+
+  // Update srcset attributes (e.g. responsive images)
+  document.querySelectorAll('[srcset]').forEach(el => {
+    const ss = el.getAttribute('srcset');
+    if (!ss) return;
+    const updated = ss.split(',').map(part => {
+      const trimmed = part.trim();
+      const pieces = trimmed.split(/\s+/);
+      const url = pieces[0];
+      if (url && url.startsWith('/')) {
+        pieces[0] = repoPrefix + url;
+      }
+      return pieces.join(' ');
+    }).join(', ');
+    el.setAttribute('srcset', updated);
+  });
 }
 
 // run early to correct asset paths on pages served from user root
@@ -57,13 +80,12 @@ function tryFetchPartial(partialPath, callback) {
   const candidates = [];
   // same-folder: ./partials/...
   candidates.push(partialPath);
+  // Try repo-root absolute path early (helps GitHub Pages nested pages)
+  candidates.push(basePath + partialPath);
   // go up 1..maxDepth levels
   for (let i = 1; i <= maxDepth; i++) {
     candidates.push('../'.repeat(i) + partialPath);
   }
-
-  // Also try using basePath as an absolute fallback
-  candidates.push(basePath + partialPath);
 
   // Try sequentially until one succeeds
   (function tryNext(i) {
