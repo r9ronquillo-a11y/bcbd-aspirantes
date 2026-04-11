@@ -77,15 +77,26 @@ function safePrefixHref(href) {
 // Helper: try fetching a partial from several relative levels (handles nested pages and file:// use)
 function tryFetchPartial(partialPath, callback) {
   const maxDepth = 6; // pages won't be deeper than this
+
+  // Build candidate list. When running on GitHub Pages and the current
+  // pathname does not contain the repo prefix, try the repo-root absolute
+  // path first to avoid many 404s from deeply nested relative attempts.
   const candidates = [];
-  // same-folder: ./partials/...
-  candidates.push(partialPath);
-  // Try repo-root absolute path early (helps GitHub Pages nested pages)
-  candidates.push(basePath + partialPath);
+  const repoPrefix = basePath.replace(/\/$/, ''); // '/bcbd-aspirantes'
+  if (isGitHub && !window.location.pathname.startsWith(repoPrefix + '/') && window.location.pathname !== repoPrefix) {
+    candidates.push(basePath + partialPath);
+    candidates.push(partialPath);
+  } else {
+    candidates.push(partialPath);
+  }
+
   // go up 1..maxDepth levels
   for (let i = 1; i <= maxDepth; i++) {
     candidates.push('../'.repeat(i) + partialPath);
   }
+
+  // Ensure repo-root fallback exists
+  if (!candidates.includes(basePath + partialPath)) candidates.push(basePath + partialPath);
 
   // Try sequentially until one succeeds
   (function tryNext(i) {

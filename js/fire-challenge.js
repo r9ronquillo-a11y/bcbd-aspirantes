@@ -42,15 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Station page: if page has data-station-index attribute, show nav arrows when ?recorrido=1 is present
-  // Station page: if page has data-station-index attribute, show nav arrows when ?recorrido=1 is present
   const stationIndexEl = document.querySelector('[data-station-index]');
   if (stationIndexEl) {
     const idx = parseInt(stationIndexEl.getAttribute('data-station-index'), 10);
-    const params = new URLSearchParams(window.location.search);
-    const recorrido = params.get('recorrido');
-    if (recorrido === '1') {
-      addStationNav(idx);
-    }
+    // Always show station nav on station pages to allow manual navigation.
+    addStationNav(idx);
   } else {
     // fallback: try infer from pathname like Estaciones/estacionN/index.html
     const m = window.location.pathname.match(/estacion(\d+)\/index\.html$/i);
