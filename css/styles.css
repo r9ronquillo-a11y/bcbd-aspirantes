@@ -115,8 +115,15 @@ main, .contenido { max-width: 1000px; margin: 28px auto; flex: 1; }
 
 /* Center header visually in middle area on small screens */
 @media (max-width:600px) {
-  .site-header-inner { margin: 14px auto; }
-  .site-nav ul { gap:8px; }
+  .site-header-inner { margin: 12px auto; padding:8px 12px; flex-wrap:wrap; align-items:center; }
+  .brand { order:1; flex:0 0 auto; }
+  .header-actions { order:2; width:100%; justify-content:flex-start; margin-top:8px; }
+  .comp-announcement { padding:6px 10px; font-size:13px; margin-left:0; }
+  /* show the icon (and optionally the text) under the brand on small screens */
+  .announce-text { display:inline-block; font-size:13px; margin-left:8px; }
+  .site-nav { order:3; width:100%; margin-top:8px; overflow:auto; -webkit-overflow-scrolling:touch; }
+  .site-nav ul { display:flex; gap:8px; flex-wrap:wrap; padding:6px 0; margin:0; }
+  .site-nav a { padding:8px 10px; }
 }
 
 /* ====== FOOTER ====== */
