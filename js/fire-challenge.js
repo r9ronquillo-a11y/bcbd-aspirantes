@@ -176,4 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) { console.warn('recordResult failed',e); }
   }
 
+  // expose for debugging / page-level calls
+  try{ window.initStopwatch = initStopwatch; console.debug && console.debug('initStopwatch exposed'); }catch(e){}
+
 });

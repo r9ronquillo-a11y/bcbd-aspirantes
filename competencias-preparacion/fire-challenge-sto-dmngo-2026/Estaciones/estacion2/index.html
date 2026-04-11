@@ -65,4 +65,10 @@
 })();
 </script>
 
+  <script>
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ var el=document.querySelector('[data-station-index]'); if(!el) return; var idx=parseInt(el.getAttribute('data-station-index'),10); if(window.initStopwatch) window.initStopwatch(idx);}catch(e){console.warn('fallback initStopwatch failed',e)}
+  });
+  </script>
+
 </html>
