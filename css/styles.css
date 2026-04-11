@@ -82,8 +82,36 @@ main, .contenido { max-width: 1000px; margin: 28px auto; flex: 1; }
 .stations-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
 .stations-list a, .stations-list button { text-align:left; padding:10px 12px; border-radius:8px; border:1px solid #eee; background:#fff; text-decoration:none; color:#111827; cursor:pointer; }
 .stations-list a:hover, .stations-list button:hover { background:#f8fafc; }
-.station-nav { display:flex; gap:12px; justify-content:center; margin-top:18px; }
 .nav-arrow { background:#111827; color:white; border-radius:8px; padding:8px 12px; border:0; cursor:pointer; }
+
+/* Station navigation: fixed arrows at screen edges */
+.station-nav { position: fixed; inset:0; pointer-events:none; z-index:320; }
+.station-nav .nav-arrow { position: fixed; top: 50%; transform: translateY(-50%); pointer-events:auto; display:flex; gap:8px; align-items:center; border-radius:999px; padding:12px 16px; }
+.station-nav .prev-arrow { left: 12px; }
+.station-nav .next-arrow { right: 12px; }
+.station-nav .nav-arrow[disabled] { opacity:0.45; cursor:default; }
+.arrow-icon { display:none; font-size:18px; }
+.arrow-text { display:inline-block; }
+
+@media (max-width: 640px) {
+  .station-nav .nav-arrow { padding:10px; }
+  .arrow-icon { display:inline-block; }
+  .arrow-text { display:none; }
+}
+
+/* Station step visuals */
+.station-steps { display:grid; grid-template-columns: repeat(2, 1fr); gap:18px; margin-top:14px; }
+.step { background:white; border-radius:10px; padding:12px; box-shadow:0 6px 18px rgba(15,23,42,0.04); display:flex; gap:12px; align-items:flex-start; }
+.step-badge { background:linear-gradient(180deg,#ffdede,#ffecec); color:#b71c1c; font-weight:700; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex:0 0 auto; }
+.step-body h3 { margin:0 0 6px; }
+.step-body p { margin:0 0 10px; color:#475569; }
+.step-body img { max-width:100%; border-radius:8px; box-shadow:0 6px 18px rgba(15,23,42,0.06); }
+.indicaciones { margin-top:12px; padding-left:18px; }
+.indicaciones li { margin-bottom:8px; }
+
+@media (max-width: 800px) {
+  .station-steps { grid-template-columns: 1fr; }
+}
 
 /* Center header visually in middle area on small screens */
 @media (max-width:600px) {

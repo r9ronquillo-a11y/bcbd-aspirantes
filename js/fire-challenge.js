@@ -18,23 +18,30 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnEstaciones) btnEstaciones.addEventListener('click', () => {
     hideAll();
     estaciones.classList.remove('hidden');
-    // open modal immediately (create if needed)
-    if (!modal) {
-      modal = createStationsModal();
-      document.body.appendChild(modal);
+    if (modal) {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      const panel = modal.querySelector('.stations-modal-panel');
+      if (panel) panel.focus();
     }
-    modal.classList.add('open');
   });
   if (btnParticipantes) btnParticipantes.addEventListener('click', () => { hideAll(); participantes.classList.remove('hidden'); });
 
-  // Modal for estaciones
-  let modal;
+  // Modal for estaciones — use static modal in DOM with id `stations-modal`
+  let modal = document.getElementById('stations-modal');
   if (openStationsModal) {
-    modal = createStationsModal();
-    document.body.appendChild(modal);
-    openStationsModal.addEventListener('click', () => modal.classList.add('open'));
+    openStationsModal.addEventListener('click', () => {
+      if (modal) {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        // focus for accessibility
+        const panel = modal.querySelector('.stations-modal-panel');
+        if (panel) panel.focus();
+      }
+    });
   }
 
+  // Station page: if page has data-station-index attribute, show nav arrows when ?recorrido=1 is present
   // Station page: if page has data-station-index attribute, show nav arrows when ?recorrido=1 is present
   const stationIndexEl = document.querySelector('[data-station-index]');
   if (stationIndexEl) {
@@ -44,11 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (recorrido === '1') {
       addStationNav(idx);
     }
-  }
-
-  // If this is a station page without data-station-index, try infer from filename (fallback)
-  if (!stationIndexEl) {
-    const m = window.location.pathname.match(/station(\d+)\.html$/);
+  } else {
+    // fallback: try infer from pathname like Estaciones/estacionN/index.html
+    const m = window.location.pathname.match(/estacion(\d+)\/index\.html$/i);
     if (m) {
       const idx = parseInt(m[1], 10);
       const params = new URLSearchParams(window.location.search);
@@ -56,70 +61,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function createStationsModal() {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'stations-modal';
-    wrapper.innerHTML = `
-      <div class="stations-modal-backdrop" tabindex="-1"></div>
-      <div class="stations-modal-panel" role="dialog" aria-modal="true">
-        <h4>Estaciones - Fire Challenge 2026</h4>
-        <p>Elige "Recorrido de Competencia" para navegar secuencialmente, o elige una estación individual.</p>
-        <div class="stations-list">
-          <a href="station1.html?recorrido=1">Recorrido de Competencia</a>
-          <a href="station1.html">Estación #1</a>
-          <a href="station2.html">Estación #2</a>
-          <a href="station3.html">Estación #3</a>
-          <a href="station4.html">Estación #4</a>
-          <a href="station5.html">Estación #5</a>
-          <a href="station6.html">Estación #6</a>
-        </div>
-        <div style="text-align:right; margin-top:12px;"><button class="primary" id="close-stations">Cerrar</button></div>
-      </div>
-    `;
-
-    // close behavior via backdrop and close button
-    wrapper.querySelector('.stations-modal-backdrop').addEventListener('click', () => wrapper.classList.remove('open'));
-    wrapper.querySelector('#close-stations').addEventListener('click', () => wrapper.classList.remove('open'));
-    // close on Escape
-    wrapper.addEventListener('keydown', (e) => { if (e.key === 'Escape') wrapper.classList.remove('open'); });
-    // also handle global Escape when modal open
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && wrapper.classList.contains('open')) wrapper.classList.remove('open'); });
-
-    return wrapper;
+  // Close handlers for static modal (backdrop and data-close attributes)
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target && target.dataset && target.dataset.close !== undefined) {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    });
+    // allow backdrop clicks (backdrop has data-close)
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); } });
   }
 
   function addStationNav(idx) {
-    const container = document.querySelector('#main-content');
-    if (!container) return;
-    const nav = document.createElement('div');
-    nav.className = 'station-nav';
+    // remove existing nav if any
+    const existing = document.querySelector('.station-nav');
+    if (existing) existing.remove();
 
     const prevBtn = document.createElement('button');
-    prevBtn.className = 'nav-arrow';
-    prevBtn.textContent = '← Anterior';
+    prevBtn.className = 'nav-arrow prev-arrow';
     prevBtn.disabled = idx <= 1;
+    prevBtn.innerHTML = '<span class="arrow-icon">←</span><span class="arrow-text">Anterior</span>';
+
     prevBtn.addEventListener('click', () => {
       if (idx > 1) {
-        const target = `station${idx-1}.html?recorrido=1`;
+        const segs = window.location.pathname.split('/').filter(s => s.length>0);
+        const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
+        const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
+        const target = prefix + `estacion${idx-1}/index.html?recorrido=1`;
         window.location.href = target;
       }
     });
 
     const nextBtn = document.createElement('button');
-    nextBtn.className = 'nav-arrow';
-    nextBtn.textContent = 'Siguiente →';
+    nextBtn.className = 'nav-arrow next-arrow';
     nextBtn.disabled = idx >= 6;
+    nextBtn.innerHTML = '<span class="arrow-text">Siguiente</span><span class="arrow-icon">→</span>';
+
     nextBtn.addEventListener('click', () => {
       if (idx < 6) {
-        const target = `station${idx+1}.html?recorrido=1`;
+        const segs = window.location.pathname.split('/').filter(s => s.length>0);
+        const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
+        const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
+        const target = prefix + `estacion${idx+1}/index.html?recorrido=1`;
         window.location.href = target;
       }
     });
 
-    nav.appendChild(prevBtn);
-    nav.appendChild(nextBtn);
-
-    container.appendChild(nav);
+    // append to body so buttons are fixed at screen edges
+    const wrapper = document.createElement('div');
+    wrapper.className = 'station-nav';
+    wrapper.appendChild(prevBtn);
+    wrapper.appendChild(nextBtn);
+    document.body.appendChild(wrapper);
   }
 
 });
