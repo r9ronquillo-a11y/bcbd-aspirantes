@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    console.debug('addStationNav: adding station nav for index', idx);
     // append to body so buttons are fixed at screen edges
     const wrapper = document.createElement('div');
     wrapper.className = 'station-nav';
