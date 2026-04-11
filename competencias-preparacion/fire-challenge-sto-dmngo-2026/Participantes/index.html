@@ -22,8 +22,33 @@
         <p class="lead">Sección de participantes. Contenido por completar.</p>
       </div>
     </section>
+    <section style="margin:20px 0">
+      <h2>Resultados registrados</h2>
+      <div id="results-panel">
+        <p>Cargando resultados...</p>
+      </div>
+      <div style="margin-top:8px"><button id="clear-results">Borrar resultados</button></div>
+    </section>
   </main>
   <div id="footer"></div>
   <script src="../../js/layout.js"></script>
+  <script>
+    (function(){
+      function formatRow(r){
+        return `<tr><td>${escapeHtml(r.name)}</td><td>${r.station}</td><td>${r.time}</td><td>${new Date(r.ts).toLocaleString()}</td></tr>`;
+      }
+      function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]; }); }
+      function render(){
+        var key='fc_results'; var raw = localStorage.getItem(key); var list = raw?JSON.parse(raw):[];
+        var out = '';
+        if(list.length===0){ document.getElementById('results-panel').innerHTML = '<p>No hay resultados aún.</p>'; return; }
+        out += '<table class="results-table"><thead><tr><th>Nombre</th><th>Estación</th><th>Tiempo</th><th>Fecha</th></tr></thead><tbody>';
+        list.forEach(function(r){ out += formatRow(r); });
+        out += '</tbody></table>';
+        document.getElementById('results-panel').innerHTML = out;
+      }
+      document.addEventListener('DOMContentLoaded', function(){ render(); var btn = document.getElementById('clear-results'); if(btn) btn.addEventListener('click', function(){ if(confirm('Borrar todos los resultados?')){ localStorage.removeItem('fc_results'); render(); } }); });
+    })();
+  </script>
 </body>
 </html>

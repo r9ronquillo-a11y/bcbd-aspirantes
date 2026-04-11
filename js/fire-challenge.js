@@ -1,6 +1,7 @@
 // JS for Fire Challenge pages: modal, section toggles, and recorrido navigation
 
 document.addEventListener('DOMContentLoaded', () => {
+  const MAX_STATIONS = 5;
   // Section toggles on index
   const btnReglas = document.getElementById('btn-reglas');
   const btnEstaciones = document.getElementById('btn-estaciones');
@@ -47,13 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const idx = parseInt(stationIndexEl.getAttribute('data-station-index'), 10);
     // Always show station nav on station pages to allow manual navigation.
     addStationNav(idx);
+    initStopwatch(idx);
   } else {
     // fallback: try infer from pathname like Estaciones/estacionN/index.html
     const m = window.location.pathname.match(/estacion(\d+)\/index\.html$/i);
     if (m) {
       const idx = parseInt(m[1], 10);
       const params = new URLSearchParams(window.location.search);
-      if (params.get('recorrido') === '1') addStationNav(idx);
+      if (params.get('recorrido') === '1') {
+        addStationNav(idx);
+        initStopwatch(idx);
+      }
     }
   }
 
@@ -92,11 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const nextBtn = document.createElement('button');
     nextBtn.className = 'nav-arrow next-arrow';
-    nextBtn.disabled = idx >= 6;
+    nextBtn.disabled = idx >= MAX_STATIONS;
     nextBtn.innerHTML = '<span class="arrow-text">Siguiente</span><span class="arrow-icon">→</span>';
 
     nextBtn.addEventListener('click', () => {
-      if (idx < 6) {
+      if (idx < MAX_STATIONS) {
         const segs = window.location.pathname.split('/').filter(s => s.length>0);
         const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
         const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
@@ -112,6 +117,63 @@ document.addEventListener('DOMContentLoaded', () => {
     wrapper.appendChild(prevBtn);
     wrapper.appendChild(nextBtn);
     document.body.appendChild(wrapper);
+  }
+
+  // Stopwatch for station pages — records to localStorage key `fc_results`
+  function initStopwatch(idx) {
+    try {
+      const container = document.createElement('div');
+      container.className = 'stopwatch-panel';
+      container.innerHTML = '\n      <div class="sw-row">\n        <input id="participant-name" placeholder="Nombre participante" />\n        <div id="sw-display" class="sw-display">00:00:00</div>\n      </div>\n      <div class="sw-row">\n        <button id="sw-start" class="primary">Iniciar</button>\n        <button id="sw-stop">Detener</button>\n        <button id="sw-reset">Reset</button>\n        <button id="sw-next">Siguiente</button>\n      </div>\n    ';
+      const main = document.getElementById('main-content') || document.body;
+      main.appendChild(container);
+
+      let centis = 0, timerId = null;
+      function formatTime(c) {
+        const cs = c % 100;
+        const totalSec = Math.floor(c/100);
+        const secs = totalSec % 60;
+        const mins = Math.floor(totalSec/60);
+        return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}:${String(cs).padStart(2,'0')}`;
+      }
+      const disp = container.querySelector('#sw-display');
+      const input = container.querySelector('#participant-name');
+      const btnStart = container.querySelector('#sw-start');
+      const btnStop = container.querySelector('#sw-stop');
+      const btnReset = container.querySelector('#sw-reset');
+      const btnNext = container.querySelector('#sw-next');
+
+      function tick() { centis++; disp.textContent = formatTime(centis); }
+
+      btnStart.addEventListener('click', () => {
+        if (timerId) return;
+        timerId = setInterval(tick, 10);
+        btnStart.disabled = true; btnStop.disabled = false;
+      });
+      function doStop() {
+        if (timerId) { clearInterval(timerId); timerId = null; }
+        btnStart.disabled = false; btnStop.disabled = true;
+        const name = input.value.trim() || 'Anónimo';
+        recordResult(name, idx, centis, formatTime(centis));
+      }
+      btnStop.addEventListener('click', doStop);
+      btnReset.addEventListener('click', () => { if (timerId) { clearInterval(timerId); timerId=null; } centis=0; disp.textContent='00:00:00'; btnStart.disabled=false; btnStop.disabled=true; });
+      btnNext.addEventListener('click', () => { doStop(); if (idx < MAX_STATIONS) { const segs = window.location.pathname.split('/').filter(s => s.length>0); const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones'); const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/'; window.location.href = prefix + `estacion${idx+1}/index.html?recorrido=1`; } });
+
+      // initial state
+      disp.textContent = '00:00:00'; btnStop.disabled = true;
+    } catch(e) { console.warn('initStopwatch failed',e); }
+  }
+
+  function recordResult(name, station, centis, timeStr) {
+    try {
+      const key = 'fc_results';
+      const raw = localStorage.getItem(key);
+      const list = raw ? JSON.parse(raw) : [];
+      list.push({name, station, centis, time: timeStr, ts: (new Date()).toISOString()});
+      localStorage.setItem(key, JSON.stringify(list));
+      console.debug('Recorded result', name, station, timeStr);
+    } catch(e) { console.warn('recordResult failed',e); }
   }
 
 });

@@ -93,8 +93,8 @@
 
             var next = document.createElement('button');
             next.className='nav-arrow next-arrow'; next.innerHTML='<span class="arrow-text">Siguiente</span><span class="arrow-icon">→</span>';
-            next.disabled = idx>=6;
-            next.addEventListener('click', function(){ if(idx<6){ var segs=location.pathname.split('/').filter(Boolean); var estIndex = segs.findIndex(s=>s.toLowerCase()==='estaciones'); var prefix = estIndex>=0?('/'+segs.slice(0,estIndex+1).join('/')+'/'):'/Estaciones/'; location.href = prefix + 'estacion'+(idx+1) + '/index.html?recorrido=1'; }});
+            next.disabled = idx>=5;
+            next.addEventListener('click', function(){ if(idx<5){ var segs=location.pathname.split('/').filter(Boolean); var estIndex = segs.findIndex(s=>s.toLowerCase()==='estaciones'); var prefix = estIndex>=0?('/'+segs.slice(0,estIndex+1).join('/')+'/'):'/Estaciones/'; location.href = prefix + 'estacion'+(idx+1) + '/index.html?recorrido=1'; }});
 
             var wrap = document.createElement('div'); wrap.className='station-nav'; wrap.appendChild(prev); wrap.appendChild(next); document.body.appendChild(wrap);
         }catch(e){console.warn('ensureNav failed',e)}
