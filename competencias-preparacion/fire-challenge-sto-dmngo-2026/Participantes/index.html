@@ -71,13 +71,25 @@
       
       function formatTimeForDisplay(timeValue) {
         try {
+          // If it's a number (centiseconds from fire-challenge.js)
+          if (typeof timeValue === 'number' && timeValue < 360000) {
+            const cs = timeValue % 100;
+            const totalSec = Math.floor(timeValue / 100);
+            const secs = totalSec % 60;
+            const totalMin = Math.floor(totalSec / 60);
+            const mins = totalMin % 60;
+            const horas = Math.floor(totalMin / 60);
+            return `${String(horas).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}:${String(cs).padStart(2,'0')}`;
+          }
           // If it's an ISO date string (Google Sheets converted our time to date)
           if (typeof timeValue === 'string' && timeValue.includes('T')) {
             const date = new Date(timeValue);
             const h = date.getUTCHours();
             const m = date.getUTCMinutes();
             const s = date.getUTCSeconds();
-            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            const ms = date.getUTCMilliseconds();
+            const cs = Math.floor(ms / 10);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(cs).padStart(2,'0')}`;
           }
           // If it's already in MM:SS:CS format
           return timeValue;
