@@ -49,7 +49,7 @@
     <section style="margin:20px 0">
       <h2>Resultados registrados</h2>
       <div id="results-panel">
-        <p>Cargando resultados...</p>
+        <p>Cargando resultados de la base de datos...</p>
       </div>
     </section>
   </main>
@@ -71,17 +71,15 @@
       
       function formatTimeForDisplay(timeValue) {
         try {
-          // If it's an ISO date string from Google Sheets (1899-12-30T05:21:34.000Z)
+          // If it's an ISO date string from Google Sheets (1899-12-30T00:10:05.000Z)
           if (typeof timeValue === 'string' && timeValue.includes('1899-12-30T')) {
             const date = new Date(timeValue);
-            const h = date.getUTCHours();
             const m = date.getUTCMinutes();
             const s = date.getUTCSeconds();
             const ms = date.getUTCMilliseconds();
             const cs = Math.floor(ms / 10);
-            // Format as M:SS:CS or MM:SS:CS
-            const minStr = h > 0 ? `${String(h * 60 + m).padStart(2, '0')}` : String(m);
-            return `${minStr}:${String(s).padStart(2, '0')}:${String(cs).padStart(2, '0')}`;
+            // Format as m:ss:cs (minutos:segundos:centésimas)
+            return `${m}:${String(s).padStart(2, '0')}:${String(cs).padStart(2, '0')}`;
           }
           // Return as-is if already formatted
           return timeValue;
