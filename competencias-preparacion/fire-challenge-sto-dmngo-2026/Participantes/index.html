@@ -94,16 +94,21 @@
             if (/^\d{1,2}:\d{2}:\d{2}$/.test(trimmed)) return trimmed;
             if (trimmed.includes('1899-12-30T')) {
               const date = new Date(trimmed);
-              const totalMinutes = date.getUTCHours() * 60 + date.getUTCMinutes();
-              const seconds = date.getUTCSeconds();
-              const centis = Math.floor(date.getUTCMilliseconds() / 10);
+              const hours = date.getHours();
+              const minutes = date.getMinutes();
+              const seconds = date.getSeconds();
+              const centis = Math.floor(date.getMilliseconds() / 10);
+              const totalMinutes = hours * 60 + minutes;
               return `${String(totalMinutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centis).padStart(2, '0')}`;
             }
-            if (!isNaN(Date.parse(trimmed))) {
-              const date = new Date(trimmed);
-              const totalMinutes = date.getUTCHours() * 60 + date.getUTCMinutes();
-              const seconds = date.getUTCSeconds();
-              const centis = Math.floor(date.getUTCMilliseconds() / 10);
+            const parsed = Date.parse(trimmed);
+            if (!isNaN(parsed)) {
+              const date = new Date(parsed);
+              const hours = date.getHours();
+              const minutes = date.getMinutes();
+              const seconds = date.getSeconds();
+              const centis = Math.floor(date.getMilliseconds() / 10);
+              const totalMinutes = hours * 60 + minutes;
               return `${String(totalMinutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centis).padStart(2, '0')}`;
             }
             return trimmed;
