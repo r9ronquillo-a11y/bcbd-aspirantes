@@ -72,8 +72,76 @@ function recordResult(name, station, centis, timeStr) {
 console.log('fire-challenge.js: initStopwatch exposed globally');
 window.initStopwatch = initStopwatch;
 
+// Extract station initialization logic so it runs regardless of DOMContentLoaded timing
+function initializeStationPage() {
+  const stationIndexEl = document.querySelector('[data-station-index]');
+  if (stationIndexEl) {
+    const idx = parseInt(stationIndexEl.getAttribute('data-station-index'), 10);
+    console.log('initializeStationPage: initializing station', idx);
+    addStationNav(idx);
+    initStopwatch(idx);
+  }
+}
+
+// Helper function moved to top level
+function addStationNav(idx) {
+  const MAX_STATIONS = 5;
+  // remove existing nav if any
+  const existing = document.querySelector('.station-nav');
+  if (existing) existing.remove();
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'nav-arrow prev-arrow';
+  prevBtn.disabled = idx <= 1;
+  prevBtn.innerHTML = '<span class="arrow-icon">←</span><span class="arrow-text">Anterior</span>';
+
+  prevBtn.addEventListener('click', () => {
+    if (idx > 1) {
+      const segs = window.location.pathname.split('/').filter(s => s.length>0);
+      const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
+      const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
+      const target = prefix + `estacion${idx-1}/index.html?recorrido=1`;
+      window.location.href = target;
+    }
+  });
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'nav-arrow next-arrow';
+  nextBtn.disabled = idx >= MAX_STATIONS;
+  nextBtn.innerHTML = '<span class="arrow-text">Siguiente</span><span class="arrow-icon">→</span>';
+
+  nextBtn.addEventListener('click', () => {
+    if (idx < MAX_STATIONS) {
+      const segs = window.location.pathname.split('/').filter(s => s.length>0);
+      const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
+      const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
+      const target = prefix + `estacion${idx+1}/index.html?recorrido=1`;
+      window.location.href = target;
+    }
+  });
+
+  console.debug('addStationNav: adding station nav for index', idx);
+  const wrapper = document.createElement('div');
+  wrapper.className = 'station-nav';
+  wrapper.appendChild(prevBtn);
+  wrapper.appendChild(nextBtn);
+  document.body.appendChild(wrapper);
+}
+
+// Call initializeStationPage as soon as DOM is interactive
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeStationPage);
+} else {
+  // Document already loaded, run immediately
+  initializeStationPage();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const MAX_STATIONS = 5;
+  
+  // Modal for estaciones — use static modal in DOM with id `stations-modal`
+  let modal = document.getElementById('stations-modal');
+  
   // Section toggles on index
   const btnReglas = document.getElementById('btn-reglas');
   const btnEstaciones = document.getElementById('btn-estaciones');
@@ -100,6 +168,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (btnParticipantes) btnParticipantes.addEventListener('click', () => { hideAll(); participantes.classList.remove('hidden'); });
 
+  if (openStationsModal) {
+    openStationsModal.addEventListener('click', () => {
+      if (modal) {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        // focus for accessibility
+        const panel = modal.querySelector('.stations-modal-panel');
+        if (panel) panel.focus();
+      }
+    });
+  }
+
   // Modal for estaciones — use static modal in DOM with id `stations-modal`
   let modal = document.getElementById('stations-modal');
   if (openStationsModal) {
@@ -114,26 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Station page: if page has data-station-index attribute, show nav arrows when ?recorrido=1 is present
-  const stationIndexEl = document.querySelector('[data-station-index]');
-  if (stationIndexEl) {
-    const idx = parseInt(stationIndexEl.getAttribute('data-station-index'), 10);
-    // Always show station nav on station pages to allow manual navigation.
-    addStationNav(idx);
-    initStopwatch(idx);
-  } else {
-    // fallback: try infer from pathname like Estaciones/estacionN/index.html
-    const m = window.location.pathname.match(/estacion(\d+)\/index\.html$/i);
-    if (m) {
-      const idx = parseInt(m[1], 10);
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('recorrido') === '1') {
-        addStationNav(idx);
-        initStopwatch(idx);
-      }
-    }
-  }
-
   // Close handlers for static modal (backdrop and data-close attributes)
   if (modal) {
     modal.addEventListener('click', (e) => {
@@ -146,51 +206,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // allow backdrop clicks (backdrop has data-close)
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); } });
   }
-
-  function addStationNav(idx) {
-    // remove existing nav if any
-    const existing = document.querySelector('.station-nav');
-    if (existing) existing.remove();
-
-    const prevBtn = document.createElement('button');
-    prevBtn.className = 'nav-arrow prev-arrow';
-    prevBtn.disabled = idx <= 1;
-    prevBtn.innerHTML = '<span class="arrow-icon">←</span><span class="arrow-text">Anterior</span>';
-
-    prevBtn.addEventListener('click', () => {
-      if (idx > 1) {
-        const segs = window.location.pathname.split('/').filter(s => s.length>0);
-        const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
-        const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
-        const target = prefix + `estacion${idx-1}/index.html?recorrido=1`;
-        window.location.href = target;
-      }
-    });
-
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'nav-arrow next-arrow';
-    nextBtn.disabled = idx >= MAX_STATIONS;
-    nextBtn.innerHTML = '<span class="arrow-text">Siguiente</span><span class="arrow-icon">→</span>';
-
-    nextBtn.addEventListener('click', () => {
-      if (idx < MAX_STATIONS) {
-        const segs = window.location.pathname.split('/').filter(s => s.length>0);
-        const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
-        const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
-        const target = prefix + `estacion${idx+1}/index.html?recorrido=1`;
-        window.location.href = target;
-      }
-    });
-
-    console.debug('addStationNav: adding station nav for index', idx);
-    // append to body so buttons are fixed at screen edges
-    const wrapper = document.createElement('div');
-    wrapper.className = 'station-nav';
-    wrapper.appendChild(prevBtn);
-    wrapper.appendChild(nextBtn);
-    document.body.appendChild(wrapper);
-  }
-
-  // initStopwatch is now defined globally at the top of this file
 
 });
