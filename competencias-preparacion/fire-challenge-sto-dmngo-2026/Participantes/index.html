@@ -71,21 +71,56 @@
       
       function formatTimeForDisplay(timeValue) {
         try {
-          // If it's an ISO date string from Google Sheets (1899-12-30T00:10:05.000Z)
-          if (typeof timeValue === 'string' && timeValue.includes('1899-12-30T')) {
-            const date = new Date(timeValue);
-            const m = date.getUTCMinutes();
-            const s = date.getUTCSeconds();
-            const ms = date.getUTCMilliseconds();
-            const cs = Math.floor(ms / 10);
-            // Format as m:ss:cs (minutos:segundos:centésimas)
-            return `${m}:${String(s).padStart(2, '0')}:${String(cs).padStart(2, '0')}`;
+          if (typeof timeValue === 'number') {
+            // Google Sheets may send a numeric value for a time field.
+            // If the value is a fractional day, convert it to time.
+            if (timeValue > 0 && timeValue < 1) {
+              const totalSeconds = timeValue * 24 * 60 * 60;
+              const minutes = Math.floor(totalSeconds / 60);
+              const seconds = Math.floor(totalSeconds % 60);
+              const centis = Math.round((totalSeconds - Math.floor(totalSeconds)) * 100);
+              return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centis).padStart(2, '0')}`;
+            }
+            // If the value looks like centiseconds stored as a number.
+            const totalCentis = Math.round(timeValue);
+            const mins = Math.floor(totalCentis / 6000);
+            const secs = Math.floor((totalCentis % 6000) / 100);
+            const cs = totalCentis % 100;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(cs).padStart(2, '0')}`;
           }
-          // Return as-is if already formatted
-          return timeValue;
+          if (typeof timeValue === 'string') {
+            const trimmed = timeValue.trim();
+            if (trimmed === '') return '';
+            if (/^\d{1,2}:\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+            if (trimmed.includes('1899-12-30T')) {
+              const date = new Date(trimmed);
+              const totalMinutes = date.getUTCHours() * 60 + date.getUTCMinutes();
+              const seconds = date.getUTCSeconds();
+              const centis = Math.floor(date.getUTCMilliseconds() / 10);
+              return `${String(totalMinutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centis).padStart(2, '0')}`;
+            }
+            if (!isNaN(Date.parse(trimmed))) {
+              const date = new Date(trimmed);
+              const totalMinutes = date.getUTCHours() * 60 + date.getUTCMinutes();
+              const seconds = date.getUTCSeconds();
+              const centis = Math.floor(date.getUTCMilliseconds() / 10);
+              return `${String(totalMinutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centis).padStart(2, '0')}`;
+            }
+            return trimmed;
+          }
+          return String(timeValue);
         } catch(e) {
           return timeValue;
         }
+      }
+      
+      function findColumnIndex(headers, names, fallback) {
+        const normalized = headers.map(h => String(h).trim().toLowerCase());
+        for (const name of names) {
+          const idx = normalized.indexOf(name);
+          if (idx !== -1) return idx;
+        }
+        return fallback;
       }
       
       function loadAndRender(){
@@ -96,10 +131,17 @@
           .then(r => r.json())
           .then(data => {
             console.log('Data from Google Sheets:', data);
-            // First row is headers, skip it
-            const results = data.slice(1).filter(row => row.length > 0 && row[0]);
-            console.log('First result row:', results[0]);
-            console.log('Row structure: [0]=', results[0]?.[0], '[1]=', results[0]?.[1], '[2]=', results[0]?.[2], '[3]=', results[0]?.[3]);
+            if (!Array.isArray(data) || data.length < 2) {
+              panel.innerHTML = '<p style="text-align:center; color:#999;">No hay resultados registrados aún.</p>';
+              return;
+            }
+            const headers = Array.isArray(data[0]) ? data[0] : [];
+            const nameIndex = findColumnIndex(headers, ['nombre', 'name'], 0);
+            const stationIndex = findColumnIndex(headers, ['estación', 'estacion', 'station'], 1);
+            const timeIndex = findColumnIndex(headers, ['tiempo', 'time', 'duration'], 2);
+            const dateIndex = findColumnIndex(headers, ['fecha', 'timestamp', 'ts', 'date'], 3);
+            const results = data.slice(1).filter(row => Array.isArray(row) && row.length > Math.max(nameIndex, stationIndex, timeIndex, dateIndex));
+            console.log('Row structure first result:', results[0]);
             
             if (results.length === 0) {
               panel.innerHTML = '<p style="text-align:center; color:#999;">No hay resultados registrados aún.</p>';
@@ -116,11 +158,15 @@
             
             results.forEach((row, idx) => {
               const bgColor = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
+              const name = escapeHtml(row[nameIndex] ?? '');
+              const station = escapeHtml(row[stationIndex] ?? '');
+              const rawTime = row[timeIndex];
+              const dateValue = row[dateIndex];
               html += `<tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">`;
-              html += `<td style="padding:12px; text-align:left;">${escapeHtml(row[0])}</td>`;
-              html += `<td style="padding:12px; text-align:center;">Estación ${row[1]}</td>`;
-              html += `<td style="padding:12px; text-align:center; font-weight:500; color:#b71c1c;">${formatTimeForDisplay(row[2])}</td>`;
-              html += `<td style="padding:12px; text-align:left; font-size:12px; color:#666;">${formatDate(row[3])}</td>`;
+              html += `<td style="padding:12px; text-align:left;">${name}</td>`;
+              html += `<td style="padding:12px; text-align:center;">Estación ${station}</td>`;
+              html += `<td style="padding:12px; text-align:center; font-weight:500; color:#b71c1c;">${formatTimeForDisplay(rawTime)}</td>`;
+              html += `<td style="padding:12px; text-align:left; font-size:12px; color:#666;">${formatDate(dateValue)}</td>`;
               html += '</tr>';
             });
             
