@@ -68,8 +68,8 @@ main, .contenido { max-width: 1000px; margin: 28px auto; flex: 1; }
 
 /* Fire Challenge: navigation and stations modal */
 .competition-nav ul { list-style:none; display:flex; gap:12px; padding:0; margin:0; }
-.competition-nav .link-like { background:transparent; border:0; color:#1f2937; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600; }
-.competition-nav .link-like:hover { background:#f3f4f6; }
+.competition-nav .link-like { background:transparent; border:1px solid #e5e7eb; color:#1f2937; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; text-decoration:none; display:inline-block; font-size:14px; transition:all 0.2s ease; }
+.competition-nav .link-like:hover { background:#f3f4f6; border-color:#d1d5db; }
 .hidden { display:none; }
 .primary { background:#b71c1c; color:white; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
 .primary:hover { filter:brightness(0.95); }
