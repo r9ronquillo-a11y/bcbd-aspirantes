@@ -71,11 +71,24 @@
       
       function formatTimeForDisplay(timeValue) {
         try {
-          // If it's already in MM:SS:CS format (from Google Sheets), return as-is
-          if (typeof timeValue === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(timeValue)) {
-            return timeValue;
+          // If it's an ISO date string from Google Sheets (1899-12-30T05:21:34.000Z)
+          if (typeof timeValue === 'string' && timeValue.includes('1899-12-30T')) {
+            const date = new Date(timeValue);
+            const h = date.getUTCHours();
+            const m = date.getUTCMinutes();
+            const s = date.getUTCSeconds();
+            const ms = date.getUTCMilliseconds();
+            const cs = Math.floor(ms / 10);
+            // Format as M:SS:CS or MM:SS:CS
+            const minStr = h > 0 ? `${String(h * 60 + m).padStart(2, '0')}` : String(m);
+            return `${minStr}:${String(s).padStart(2, '0')}:${String(cs).padStart(2, '0')}`;
           }
+          // Return as-is if already formatted
           return timeValue;
+        } catch(e) {
+          return timeValue;
+        }
+      }
         } catch(e) {
           return timeValue;
         }
@@ -91,6 +104,8 @@
             console.log('Data from Google Sheets:', data);
             // First row is headers, skip it
             const results = data.slice(1).filter(row => row.length > 0 && row[0]);
+            console.log('First result row:', results[0]);
+            console.log('Row structure: [0]=', results[0]?.[0], '[1]=', results[0]?.[1], '[2]=', results[0]?.[2], '[3]=', results[0]?.[3]);
             
             if (results.length === 0) {
               panel.innerHTML = '<p style="text-align:center; color:#999;">No hay resultados registrados aún.</p>';
@@ -110,8 +125,8 @@
               html += `<tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">`;
               html += `<td style="padding:12px; text-align:left;">${escapeHtml(row[0])}</td>`;
               html += `<td style="padding:12px; text-align:center;">Estación ${row[1]}</td>`;
-              html += `<td style="padding:12px; text-align:center; font-weight:500; color:#b71c1c;">${formatTimeForDisplay(row[3])}</td>`;
-              html += `<td style="padding:12px; text-align:left; font-size:12px; color:#666;">${formatDate(row[4])}</td>`;
+              html += `<td style="padding:12px; text-align:center; font-weight:500; color:#b71c1c;">${formatTimeForDisplay(row[2])}</td>`;
+              html += `<td style="padding:12px; text-align:left; font-size:12px; color:#666;">${formatDate(row[3])}</td>`;
               html += '</tr>';
             });
             
