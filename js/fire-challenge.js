@@ -135,24 +135,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // Stopwatch for station pages — records to localStorage key `fc_results`
   function initStopwatch(idx) {
     try {
+      // diagnostics: log invocation
+      console.log('initStopwatch called for idx', idx, 'readyState', document.readyState);
       // avoid duplicating the panel
-      if (document.querySelector('.stopwatch-panel')) return;
+      if (document.querySelector('.stopwatch-panel')) { console.log('initStopwatch: panel already exists, skipping'); return; }
       const container = document.createElement('div');
       container.className = 'stopwatch-panel';
       // make it visually obvious while debugging
       container.style.cssText = 'background: rgba(255,255,255,0.98); border: 2px solid #b71c1c; padding:12px; border-radius:8px; margin:12px 0; box-shadow:0 6px 18px rgba(0,0,0,0.06);';
+      console.log('initStopwatch: creating container');
       container.innerHTML = '\n      <div class="sw-row">\n        <input id="participant-name" placeholder="Nombre participante" />\n        <div id="sw-display" class="sw-display">00:00:00</div>\n      </div>\n      <div class="sw-row">\n        <button id="sw-start" class="primary">Iniciar</button>\n        <button id="sw-stop">Detener</button>\n        <button id="sw-reset">Reset</button>\n        <button id="sw-next">Siguiente</button>\n      </div>\n    ';
       const main = document.getElementById('main-content') || document.body;
       // try to place the panel just before the station steps (so it appears above "Pasos")
       const stationSteps = main.querySelector('.station-steps');
+      console.log('initStopwatch: stationSteps=', stationSteps);
       if (stationSteps && stationSteps.parentNode) {
         stationSteps.parentNode.insertBefore(container, stationSteps);
+        console.log('initStopwatch: inserted before stationSteps');
       } else {
         const firstSection = main.querySelector('section');
-        if (firstSection) main.insertBefore(container, firstSection);
-        else main.appendChild(container);
+        if (firstSection) {
+          main.insertBefore(container, firstSection);
+          console.log('initStopwatch: inserted before first section');
+        } else {
+          main.appendChild(container);
+          console.log('initStopwatch: appended to main');
+        }
       }
-      console.debug && console.debug('initStopwatch: injected panel for station', idx, container);
+      console.log('initStopwatch: injected panel for station', idx, container, 'parent:', container.parentNode);
 
       let centis = 0, timerId = null;
       function formatTime(c) {
