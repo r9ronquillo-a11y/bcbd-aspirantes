@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Modal for estaciones — use static modal in DOM with id `stations-modal`
   let modal = document.getElementById('stations-modal');
+  console.log('DOMContentLoaded fired, modal=', modal);
   
   // Section toggles on index
   const btnReglas = document.getElementById('btn-reglas');
@@ -150,35 +151,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const estaciones = document.getElementById('estaciones');
   const participantes = document.getElementById('participantes');
   const openStationsModal = document.getElementById('open-stations-modal');
+  
+  console.log('buttons:', {btnReglas, btnEstaciones, btnParticipantes});
 
   function hideAll() {
     [reglas, estaciones, participantes].forEach(el => el && el.classList.add('hidden'));
   }
 
   if (btnReglas) btnReglas.addEventListener('click', () => { hideAll(); reglas.classList.remove('hidden'); });
-  if (btnEstaciones) btnEstaciones.addEventListener('click', () => {
-    hideAll();
-    estaciones.classList.remove('hidden');
-    if (modal) {
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-      const panel = modal.querySelector('.stations-modal-panel');
-      if (panel) panel.focus();
-    }
-  });
-  if (btnParticipantes) btnParticipantes.addEventListener('click', () => { hideAll(); participantes.classList.remove('hidden'); });
-
-  if (openStationsModal) {
-    openStationsModal.addEventListener('click', () => {
+  if (btnEstaciones) {
+    console.log('Registering btnEstaciones listener');
+    btnEstaciones.addEventListener('click', () => {
+      console.log('btnEstaciones clicked, modal=', modal);
+      hideAll();
+      estaciones.classList.remove('hidden');
       if (modal) {
         modal.classList.add('open');
         modal.setAttribute('aria-hidden', 'false');
-        // focus for accessibility
         const panel = modal.querySelector('.stations-modal-panel');
         if (panel) panel.focus();
+        console.log('Modal opened');
       }
     });
   }
+  if (btnParticipantes) btnParticipantes.addEventListener('click', () => { hideAll(); participantes.classList.remove('hidden'); });
 
   // Modal for estaciones — use static modal in DOM with id `stations-modal`
   let modal = document.getElementById('stations-modal');
