@@ -157,13 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Section toggles on index
   const btnReglas = document.getElementById('btn-reglas');
   const btnEstaciones = document.getElementById('btn-estaciones');
-  const btnParticipantes = document.getElementById('btn-participantes');
+  const btnRanking = document.getElementById('btn-participantes');
   const reglas = document.getElementById('reglas');
   const estaciones = document.getElementById('estaciones');
   const participantes = document.getElementById('participantes');
   const openStationsModal = document.getElementById('open-stations-modal');
   
-  console.log('buttons:', {btnReglas, btnEstaciones, btnParticipantes});
+  console.log('buttons:', {btnReglas, btnEstaciones, btnRanking});
 
   function hideAll() {
     [reglas, estaciones, participantes].forEach(el => el && el.classList.add('hidden'));
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  if (btnParticipantes) btnParticipantes.addEventListener('click', () => { hideAll(); participantes.classList.remove('hidden'); });
+  if (btnRanking) btnRanking.addEventListener('click', () => { window.location.href = 'ranking/index.html'; });
 
   // Handle openStationsModal button
   if (openStationsModal) {
