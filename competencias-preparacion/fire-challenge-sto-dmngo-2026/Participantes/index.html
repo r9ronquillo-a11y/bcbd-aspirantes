@@ -47,7 +47,7 @@
       </div>
     </section>
     <section style="margin:20px 0">
-      <h2>Resultados registrados (Global)</h2>
+      <h2>Resultados registrados</h2>
       <div id="results-panel">
         <p>Cargando resultados...</p>
       </div>
@@ -71,7 +71,10 @@
       
       function formatTimeForDisplay(timeValue) {
         try {
-          // Simply return as-is, Google Sheets already has it correctly formatted
+          // If it's already in MM:SS:CS format (from Google Sheets), return as-is
+          if (typeof timeValue === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(timeValue)) {
+            return timeValue;
+          }
           return timeValue;
         } catch(e) {
           return timeValue;
@@ -80,7 +83,7 @@
       
       function loadAndRender(){
         const panel = document.getElementById('results-panel');
-        panel.innerHTML = '<p style="text-align:center; color:#666;">Cargando resultados globales...</p>';
+        panel.innerHTML = '<p style="text-align:center; color:#666;">Cargando resultados de la base de datos...</p>';
         
         fetch(GSHEET_URL)
           .then(r => r.json())
