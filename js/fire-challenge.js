@@ -63,9 +63,20 @@ function recordResult(name, station, centis, timeStr) {
     const key = 'fc_results';
     const raw = localStorage.getItem(key);
     const list = raw ? JSON.parse(raw) : [];
-    list.push({name, station, centis, time: timeStr, ts: (new Date()).toISOString()});
+    const result = {name, station, centis, time: timeStr, ts: (new Date()).toISOString()};
+    list.push(result);
     localStorage.setItem(key, JSON.stringify(list));
-    console.debug('Recorded result', name, station, timeStr);
+    console.debug('Recorded result locally', name, station, timeStr);
+    
+    // Send to Google Sheets
+    const gsheetUrl = 'https://script.google.com/macros/s/AKfycbxAuEJeg7ET6gC1IFXDgASi1FsCKhlYyBx7EHB0W1TdD4rtb4e8z2hHbZGinI1xVbf24A/exec';
+    fetch(gsheetUrl, {
+      method: 'POST',
+      body: JSON.stringify(result)
+    })
+    .then(r => r.json())
+    .then(data => console.log('Google Sheets sync success', data))
+    .catch(e => console.warn('Google Sheets sync failed', e));
   } catch(e) { console.warn('recordResult failed',e); }
 }
 

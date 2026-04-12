@@ -47,31 +47,79 @@
       </div>
     </section>
     <section style="margin:20px 0">
-      <h2>Resultados registrados</h2>
+      <h2>Resultados registrados (Global)</h2>
       <div id="results-panel">
         <p>Cargando resultados...</p>
       </div>
-      <div style="margin-top:8px"><button id="clear-results">Borrar resultados</button></div>
     </section>
   </main>
   <div id="footer"></div>
   <script src="../../js/layout.js"></script>
   <script>
     (function(){
-      function formatRow(r){
-        return `<tr><td>${escapeHtml(r.name)}</td><td>${r.station}</td><td>${r.time}</td><td>${new Date(r.ts).toLocaleString()}</td></tr>`;
-      }
+      const GSHEET_URL = 'https://script.google.com/macros/s/AKfycbxAuEJeg7ET6gC1IFXDgASi1FsCKhlYyBx7EHB0W1TdD4rtb4e8z2hHbZGinI1xVbf24A/exec';
+      
       function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]; }); }
-      function render(){
-        var key='fc_results'; var raw = localStorage.getItem(key); var list = raw?JSON.parse(raw):[];
-        var out = '';
-        if(list.length===0){ document.getElementById('results-panel').innerHTML = '<p>No hay resultados aún.</p>'; return; }
-        out += '<table class="results-table"><thead><tr><th>Nombre</th><th>Estación</th><th>Tiempo</th><th>Fecha</th></tr></thead><tbody>';
-        list.forEach(function(r){ out += formatRow(r); });
-        out += '</tbody></table>';
-        document.getElementById('results-panel').innerHTML = out;
+      
+      function formatDate(dateStr) {
+        try {
+          return new Date(dateStr).toLocaleString();
+        } catch(e) {
+          return dateStr;
+        }
       }
-      document.addEventListener('DOMContentLoaded', function(){ render(); var btn = document.getElementById('clear-results'); if(btn) btn.addEventListener('click', function(){ if(confirm('Borrar todos los resultados?')){ localStorage.removeItem('fc_results'); render(); } }); });
+      
+      function loadAndRender(){
+        const panel = document.getElementById('results-panel');
+        panel.innerHTML = '<p style="text-align:center; color:#666;">Cargando resultados globales...</p>';
+        
+        fetch(GSHEET_URL)
+          .then(r => r.json())
+          .then(data => {
+            console.log('Data from Google Sheets:', data);
+            // First row is headers, skip it
+            const results = data.slice(1).filter(row => row.length > 0 && row[0]);
+            
+            if (results.length === 0) {
+              panel.innerHTML = '<p style="text-align:center; color:#999;">No hay resultados registrados aún.</p>';
+              return;
+            }
+            
+            let html = '<table style="width:100%; border-collapse:collapse; margin-top:12px;">';
+            html += '<thead><tr style="background:#f3f4f6; border-bottom:2px solid #d1d5db;">';
+            html += '<th style="padding:12px; text-align:left; font-weight:600;">Nombre</th>';
+            html += '<th style="padding:12px; text-align:center; font-weight:600;">Estación</th>';
+            html += '<th style="padding:12px; text-align:center; font-weight:600;">Tiempo</th>';
+            html += '<th style="padding:12px; text-align:left; font-weight:600;">Fecha</th>';
+            html += '</tr></thead><tbody>';
+            
+            results.forEach((row, idx) => {
+              const bgColor = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
+              html += `<tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">`;
+              html += `<td style="padding:12px; text-align:left;">${escapeHtml(row[0])}</td>`;
+              html += `<td style="padding:12px; text-align:center;">Estación ${row[1]}</td>`;
+              html += `<td style="padding:12px; text-align:center; font-weight:500; color:#b71c1c;">${row[2]}</td>`;
+              html += `<td style="padding:12px; text-align:left; font-size:12px; color:#666;">${formatDate(row[3])}</td>`;
+              html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            panel.innerHTML = html;
+          })
+          .catch(err => {
+            console.error('Error fetching from Google Sheets:', err);
+            panel.innerHTML = '<p style="color:#d32f2f; text-align:center;">Error al cargar resultados. ' + err.message + '</p>';
+          });
+      }
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadAndRender);
+      } else {
+        loadAndRender();
+      }
+      
+      // Refrescar cada 5 segundos
+      setInterval(loadAndRender, 5000);
     })();
   </script>
 </body>
