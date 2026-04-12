@@ -1,5 +1,18 @@
 // JS for Fire Challenge pages: modal, section toggles, and recorrido navigation
 
+// Expose a safe `window.initStopwatch` wrapper early so pages that call it
+// before this script finishes loading won't lose the request. Calls are
+// queued and flushed once the real `initStopwatch` is available.
+window.__fc_pending_inits = window.__fc_pending_inits || [];
+if (!window.initStopwatch) {
+  window.initStopwatch = function(idx) {
+    if (typeof window.__fc_initStopwatch_real === 'function') {
+      try { return window.__fc_initStopwatch_real(idx); } catch(e) { console.warn('initStopwatch call failed', e); }
+    }
+    window.__fc_pending_inits.push(idx);
+  };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const MAX_STATIONS = 5;
   // Section toggles on index
@@ -176,7 +189,16 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) { console.warn('recordResult failed',e); }
   }
 
-  // expose for debugging / page-level calls
-  try{ window.initStopwatch = initStopwatch; console.debug && console.debug('initStopwatch exposed'); }catch(e){}
+  // expose for debugging / page-level calls and flush any queued calls
+  try {
+    window.__fc_initStopwatch_real = initStopwatch;
+    if (!window.__fc_pending_inits) window.__fc_pending_inits = [];
+    window.__fc_pending_inits.forEach(i => {
+      try { window.__fc_initStopwatch_real(i); } catch(e) { console.warn('pending initStopwatch failed', e); }
+    });
+    window.__fc_pending_inits = [];
+    window.initStopwatch = function(idx) { try { return window.__fc_initStopwatch_real(idx); } catch(e) { console.warn('initStopwatch call failed', e); } };
+    console.debug && console.debug('initStopwatch exposed');
+  } catch(e) {}
 
 });
