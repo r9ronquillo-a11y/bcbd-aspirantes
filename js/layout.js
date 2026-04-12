@@ -1,6 +1,6 @@
-const isGitHub = window.location.hostname.includes("github.io");
+var isGitHub = window.location.hostname.includes("github.io");
 
-const basePath = isGitHub
+var basePath = isGitHub
   ? "/bcbd-aspirantes/"
   : "/";
 

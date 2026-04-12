@@ -176,8 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (btnParticipantes) btnParticipantes.addEventListener('click', () => { hideAll(); participantes.classList.remove('hidden'); });
 
-  // Modal for estaciones — use static modal in DOM with id `stations-modal`
-  let modal = document.getElementById('stations-modal');
+  // Handle openStationsModal button
   if (openStationsModal) {
     openStationsModal.addEventListener('click', () => {
       if (modal) {
