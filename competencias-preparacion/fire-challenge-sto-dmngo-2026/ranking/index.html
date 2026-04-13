@@ -48,6 +48,7 @@
     </section>
     <section style="margin:20px 0">
       <h2>Resultados registrados</h2>
+      <p style="margin:8px 0 16px; color:#333;">Ranking por estación. Haz click en el nombre para ver todos los tiempos registrados de cada participante, ordenados de último a primero.</p>
       <div id="results-panel">
         <p>Cargando resultados de la base de datos...</p>
       </div>
@@ -119,6 +120,50 @@
         }
       }
       
+      function parseTimeToCentis(timeValue) {
+        try {
+          if (typeof timeValue === 'number') {
+            if (timeValue > 0 && timeValue < 1) {
+              const totalSeconds = timeValue * 24 * 60 * 60;
+              return Math.round(totalSeconds * 100);
+            }
+            return Math.round(timeValue);
+          }
+          if (typeof timeValue === 'string') {
+            const trimmed = timeValue.trim();
+            if (trimmed === '') return NaN;
+            const timeMatch = trimmed.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+            if (timeMatch) {
+              const mins = parseInt(timeMatch[1], 10);
+              const secs = parseInt(timeMatch[2], 10);
+              const cs = parseInt(timeMatch[3], 10);
+              return mins * 6000 + secs * 100 + cs;
+            }
+            if (/^\d+(\.\d+)?$/.test(trimmed)) {
+              return Math.round(Number(trimmed));
+            }
+            const parsed = Date.parse(trimmed);
+            if (!isNaN(parsed)) {
+              const date = new Date(parsed);
+              const totalMinutes = date.getHours() * 60 + date.getMinutes();
+              const seconds = date.getSeconds();
+              const centis = Math.floor(date.getMilliseconds() / 10);
+              return totalMinutes * 6000 + seconds * 100 + centis;
+            }
+          }
+        } catch (e) {
+          console.warn('parseTimeToCentis error', e, timeValue);
+        }
+        return NaN;
+      }
+      
+      function normalizeStation(rawStation) {
+        const trimmed = String(rawStation ?? '').trim();
+        if (!trimmed) return 'Estación desconocida';
+        const numberMatch = trimmed.match(/(\d+)/);
+        return numberMatch ? `Estación ${numberMatch[1]}` : trimmed;
+      }
+      
       function findColumnIndex(headers, names, fallback) {
         const normalized = headers.map(h => String(h).trim().toLowerCase());
         for (const name of names) {
@@ -153,30 +198,96 @@
               return;
             }
             
-            let html = '<table style="width:100%; border-collapse:collapse; margin-top:12px;">';
-            html += '<thead><tr style="background:#f3f4f6; border-bottom:2px solid #d1d5db;">';
-            html += '<th style="padding:12px; text-align:left; font-weight:600;">Nombre</th>';
-            html += '<th style="padding:12px; text-align:center; font-weight:600;">Estación</th>';
-            html += '<th style="padding:12px; text-align:center; font-weight:600;">Tiempo</th>';
-            html += '<th style="padding:12px; text-align:left; font-weight:600;">Fecha</th>';
-            html += '</tr></thead><tbody>';
-            
-            results.forEach((row, idx) => {
-              const bgColor = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
-              const name = escapeHtml(row[nameIndex] ?? '');
-              const station = escapeHtml(row[stationIndex] ?? '');
-              const rawTime = row[timeIndex];
+            const stationGroups = {};
+            results.forEach(row => {
+              const name = String(row[nameIndex] ?? '').trim();
+              if (!name) return;
+              const stationRaw = row[stationIndex];
+              const stationKey = normalizeStation(stationRaw);
+              const timeStr = formatTimeForDisplay(row[timeIndex]);
+              const centis = parseTimeToCentis(row[timeIndex]);
+              if (!isFinite(centis)) return;
               const dateValue = row[dateIndex];
-              html += `<tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">`;
-              html += `<td style="padding:12px; text-align:left;">${name}</td>`;
-              html += `<td style="padding:12px; text-align:center;">Estación ${station}</td>`;
-              html += `<td style="padding:12px; text-align:center; font-weight:500; color:#b71c1c;">${formatTimeForDisplay(rawTime)}</td>`;
-              html += `<td style="padding:12px; text-align:left; font-size:12px; color:#666;">${formatDate(dateValue)}</td>`;
-              html += '</tr>';
+              const dateMillis = Date.parse(dateValue) || 0;
+              const entry = { name, stationKey, timeStr, centis, dateValue, dateMillis };
+              if (!stationGroups[stationKey]) {
+                stationGroups[stationKey] = { entries: [], runners: {} };
+              }
+              stationGroups[stationKey].entries.push(entry);
+              const runnerKey = name.toLowerCase().trim();
+              if (!stationGroups[stationKey].runners[runnerKey]) {
+                stationGroups[stationKey].runners[runnerKey] = { name, bestEntry: entry, allEntries: [entry] };
+              } else {
+                const runner = stationGroups[stationKey].runners[runnerKey];
+                runner.allEntries.push(entry);
+                const currentBest = runner.bestEntry;
+                if (entry.centis < currentBest.centis || (entry.centis === currentBest.centis && entry.dateMillis > currentBest.dateMillis)) {
+                  runner.bestEntry = entry;
+                }
+              }
             });
             
-            html += '</tbody></table>';
+            const stationKeys = Object.keys(stationGroups).sort((a, b) => {
+              const numA = parseInt(a.match(/(\d+)/)?.[1] || '', 10);
+              const numB = parseInt(b.match(/(\d+)/)?.[1] || '', 10);
+              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+              return a.localeCompare(b);
+            });
+            
+            let html = '';
+            stationKeys.forEach(stationKey => {
+              const group = stationGroups[stationKey];
+              const avgCentis = Math.round(group.entries.reduce((sum, item) => sum + item.centis, 0) / group.entries.length);
+              const avgLabel = group.entries.length ? formatTimeForDisplay(avgCentis) : '-';
+              const runners = Object.values(group.runners).sort((a, b) => {
+                if (a.bestEntry.centis !== b.bestEntry.centis) return a.bestEntry.centis - b.bestEntry.centis;
+                return a.name.localeCompare(b.name);
+              });
+              
+              html += `<section style="margin-bottom:28px; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; background:#ffffff; box-shadow:0 1px 2px rgba(15,23,42,0.05);">`;
+              html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px 18px; background:#f8fafc; border-bottom:1px solid #e5e7eb;">`;
+              html += `<div style="font-weight:700; font-size:1rem;">${escapeHtml(stationKey)}</div>`;
+              html += `<div style="color:#374151; font-size:.95rem;">Promedio de estación: <strong>${escapeHtml(avgLabel)}</strong></div>`;
+              html += `</div>`;
+              html += `<table style="width:100%; border-collapse:collapse;">`;
+              html += `<thead><tr style="background:#f3f4f6; border-bottom:2px solid #d1d5db;">`;
+              html += `<th style="padding:14px 18px; text-align:left; font-weight:600;">Nombre</th>`;
+              html += `<th style="padding:14px 18px; text-align:center; font-weight:600;">Mejor tiempo</th>`;
+              html += `<th style="padding:14px 18px; text-align:center; font-weight:600;">Fecha</th>`;
+              html += `<th style="padding:14px 18px; text-align:center; font-weight:600;">Registros</th>`;
+              html += `</tr></thead><tbody>`;
+              
+              runners.forEach((runner, runnerIdx) => {
+                const bgColor = runnerIdx % 2 === 0 ? '#ffffff' : '#f9fafb';
+                const best = runner.bestEntry;
+                const entriesSorted = runner.allEntries.slice().sort((a, b) => b.dateMillis - a.dateMillis);
+                const detailsList = entriesSorted.map(entry => `<li style="margin:0 0 4px; padding:0;">${escapeHtml(formatDate(entry.dateValue))} — <strong>${escapeHtml(entry.timeStr)}</strong></li>`).join('');
+                html += `<tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">`;
+                html += `<td style="padding:12px 18px; text-align:left;">`;
+                html += `<button type="button" class="runner-toggle" style="background:none;border:none;color:#1d4ed8;cursor:pointer;padding:0;font:inherit;text-align:left;">${escapeHtml(runner.name)}</button>`;
+                html += `</td>`;
+                html += `<td style="padding:12px 18px; text-align:center; font-weight:600; color:#b71c1c;">${escapeHtml(best.timeStr)}</td>`;
+                html += `<td style="padding:12px 18px; text-align:center; color:#475569;">${escapeHtml(formatDate(best.dateValue))}</td>`;
+                html += `<td style="padding:12px 18px; text-align:center; color:#475569;">${entriesSorted.length}</td>`;
+                html += `</tr>`;
+                html += `<tr class="runner-details" style="display:none; background:#f8fafc;">`;
+                html += `<td colspan="4" style="padding:12px 18px 18px 42px; color:#334155; font-size:.95rem;">`;
+                html += `<div style="margin-bottom:8px; font-weight:600;">Tiempos ordenados de último a primero:</div>`;
+                html += `<ul style="margin:0; padding-left:18px;">${detailsList}</ul>`;
+                html += `</td></tr>`;
+              });
+              
+              html += `</tbody></table></section>`;
+            });
+            
             panel.innerHTML = html;
+            document.querySelectorAll('.runner-toggle').forEach(button => {
+              button.addEventListener('click', function() {
+                const detailsRow = this.closest('tr').nextElementSibling;
+                if (!detailsRow) return;
+                detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
+              });
+            });
           })
           .catch(err => {
             console.error('Error fetching from Google Sheets:', err);
