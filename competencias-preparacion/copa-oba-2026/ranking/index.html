@@ -224,7 +224,10 @@
               const stationRaw = row[stationIndex];
               const stationKey = normalizeStation(stationRaw);
               const competitionRaw = competitionIndex >= 0 ? row[competitionIndex] : '';
-              const competitionKey = normalizeCompetition(competitionRaw) || 'fire-challenge';
+              let competitionKey = normalizeCompetition(competitionRaw);
+              if (!competitionKey) {
+                competitionKey = competitionFilter === 'copa-oba' ? '' : 'fire-challenge';
+              }
               if (competitionFilter && competitionKey !== competitionFilter) return;
               const timeStr = formatTimeForDisplay(row[timeIndex]);
               const centis = parseTimeToCentis(row[timeIndex]);
