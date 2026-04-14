@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Ranking — Fire Challenge 2026</title>
+  <title>Ranking — Copa OBA 2026</title>
   <script>
     (function(){
       var repoPrefix = location.hostname.includes('github.io') ? '/bcbd-aspirantes' : '';
@@ -42,13 +42,13 @@
   <main id="main-content">
     <section class="home-hero">
       <div class="hero-inner">
-        <h1>Ranking de Entrenamiento— Fire Challenge Santo Domingo 2026</h1>
-        <p class="lead">Ranking de tiempos de las Estaciones de Fire Challenge Santo Domingo 2026. Aquí verás el ranking actualizado, si se ha utilizado la funcion cronometro.</p>
+        <h1>Ranking — Copa OBA 2026</h1>
+        <p class="lead">Ranking de tiempos de las Estaciones de Copa OBA 2026. Aquí se muestran los registros enviados desde el cronómetro con competencia.</p>
       </div>
     </section>
     <section style="margin:20px 0">
       <h2>Resultados registrados</h2>
-      <p style="margin:8px 0 16px; color:#333;">Ranking por estación. Haz click en el nombre para ver todos los tiempos registrados de cada participante, ordenados de último a primero.</p>
+      <p style="margin:8px 0 16px; color:#333;">Ranking por estación. Los resultados se filtran automáticamente por la competencia Copa OBA.</p>
       <div id="results-panel">
         <p>Cargando resultados de la base de datos...</p>
       </div>
@@ -59,17 +59,9 @@
   <script>
     (function(){
       const GSHEET_URL = 'https://script.google.com/macros/s/AKfycbxAuEJeg7ET6gC1IFXDgASi1FsCKhlYyBx7EHB0W1TdD4rtb4e8z2hHbZGinI1xVbf24A/exec';
-      
-      function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]; }); }
-      
-      function formatDate(dateStr) {
-        try {
-          return new Date(dateStr).toLocaleString();
-        } catch(e) {
-          return dateStr;
-        }
-      }
-      
+
+      function escapeHtml(s){ return String(s).replace(/[&<>\"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]; }); }
+
       function normalizeCompetition(raw) {
         const value = String(raw || '').trim().toLowerCase();
         if (!value) return '';
@@ -90,12 +82,18 @@
       }
 
       const competitionFilter = getPageCompetition();
-      
+
+      function formatDate(dateStr) {
+        try {
+          return new Date(dateStr).toLocaleString();
+        } catch(e) {
+          return dateStr;
+        }
+      }
+
       function formatTimeForDisplay(timeValue) {
         try {
           if (typeof timeValue === 'number') {
-            // Google Sheets may send a numeric value for a time field.
-            // If the value is a fractional day, convert it to time.
             if (timeValue > 0 && timeValue < 1) {
               const totalSeconds = timeValue * 24 * 60 * 60;
               const minutes = Math.floor(totalSeconds / 60);
@@ -103,7 +101,6 @@
               const centis = Math.round((totalSeconds - Math.floor(totalSeconds)) * 100);
               return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(centis).padStart(2, '0')}`;
             }
-            // If the value looks like centiseconds stored as a number.
             const totalCentis = Math.round(timeValue);
             const mins = Math.floor(totalCentis / 6000);
             const secs = Math.floor((totalCentis % 6000) / 100);
@@ -140,7 +137,7 @@
           return timeValue;
         }
       }
-      
+
       function parseTimeToCentis(timeValue) {
         try {
           if (typeof timeValue === 'number') {
@@ -177,14 +174,14 @@
         }
         return NaN;
       }
-      
+
       function normalizeStation(rawStation) {
         const trimmed = String(rawStation ?? '').trim();
         if (!trimmed) return 'Estación desconocida';
         const numberMatch = trimmed.match(/(\d+)/);
         return numberMatch ? `Estación ${numberMatch[1]}` : trimmed;
       }
-      
+
       function findColumnIndex(headers, names, fallback) {
         const normalized = headers.map(h => String(h).trim().toLowerCase());
         for (const name of names) {
@@ -193,7 +190,7 @@
         }
         return fallback;
       }
-      
+
       function loadAndRender(){
         const panel = document.getElementById('results-panel');
         panel.innerHTML = '<p style="text-align:center; color:#666;">Cargando resultados de la base de datos...</p>';

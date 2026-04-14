@@ -1,15 +1,44 @@
 // JS for Fire Challenge pages: modal, section toggles, and recorrido navigation
 
+function getCompetitionFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = (params.get('competition') || params.get('competencia') || params.get('comp') || '').trim().toLowerCase();
+    if (raw) {
+      if (raw.includes('oba')) return 'copa-oba';
+      if (raw.includes('fire')) return 'fire-challenge';
+      if (raw.includes('challenge')) return 'fire-challenge';
+    }
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('/copa-oba-2026/')) return 'copa-oba';
+    if (path.includes('/fire-challenge-sto-dmngo-2026/')) return 'fire-challenge';
+  } catch (e) {
+    console.warn('getCompetitionFromUrl failed', e);
+  }
+  return 'fire-challenge';
+}
+
+function getCompetitionDisplayName(key) {
+  return key === 'copa-oba' ? 'Copa OBA 2026' : 'Fire Challenge Santo Domingo 2026';
+}
+
+function getCompetitionStationLimit(key) {
+  return key === 'copa-oba' ? 4 : 5;
+}
+
 // Define the real initStopwatch function at the top level so it's always available
 function initStopwatch(idx) {
   try {
     console.log('initStopwatch called for idx', idx);
     // avoid duplicating the panel
     if (document.querySelector('.stopwatch-panel')) { console.log('initStopwatch: panel already exists, skipping'); return; }
+    const competitionKey = getCompetitionFromUrl();
+    const competitionName = getCompetitionDisplayName(competitionKey);
+    const stationLimit = getCompetitionStationLimit(competitionKey);
     const container = document.createElement('div');
     container.className = 'stopwatch-panel';
     container.style.cssText = 'background: rgba(255,255,255,0.98); border: 2px solid #b71c1c; padding:12px; border-radius:8px; margin:12px 0; box-shadow:0 6px 18px rgba(0,0,0,0.06);';
-    container.innerHTML = '\n      <div class="sw-row" style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">\n        <input id="participant-name" placeholder="Nombre participante" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;" />\n        <div id="sw-display" class="sw-display" style="font-size:24px; font-weight:700; font-family:monospace; min-width:120px; text-align:center;">00:00:00</div>\n      </div>\n      <div class="sw-row" style="display:flex; gap:8px; flex-wrap:wrap;">\n        <button id="sw-start" class="primary" style="background:#b71c1c; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer; font-weight:600;">Iniciar</button>\n        <button id="sw-stop" style="background:#666; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer;">Detener</button>\n        <button id="sw-reset" style="background:#999; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer;">Reset</button>\n        <button id="sw-next" class="primary" style="background:#b71c1c; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer;">Siguiente</button>\n      </div>\n    ';
+    container.innerHTML = '\n      <div class="sw-row" style="display:flex; gap:12px; align-items:flex-end; margin-bottom:12px; flex-wrap:wrap;">\n        <label style="flex:1 1 180px; display:flex; flex-direction:column; gap:4px; font-size:14px;">\n          Competencia\n          <select id="competition-select" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">\n            <option value="fire-challenge">Fire Challenge Santo Domingo 2026</option>\n            <option value="copa-oba">Copa OBA 2026</option>\n          </select>\n        </label>\n        <label style="flex:1 1 220px; display:flex; flex-direction:column; gap:4px; font-size:14px;">\n          Nombre del participante\n          <input id="participant-name" placeholder="Nombre participante" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;" />\n        </label>\n        <div id="sw-display" class="sw-display" style="font-size:24px; font-weight:700; font-family:monospace; min-width:120px; text-align:center;">00:00:00</div>\n      </div>\n      <div class="sw-row" style="display:flex; gap:8px; flex-wrap:wrap;">\n        <button id="sw-start" class="primary" style="background:#b71c1c; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer; font-weight:600;">Iniciar</button>\n        <button id="sw-stop" style="background:#666; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer;">Detener</button>\n        <button id="sw-reset" style="background:#999; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer;">Reset</button>\n        <button id="sw-next" class="primary" style="background:#b71c1c; color:white; border:0; padding:10px 16px; border-radius:4px; cursor:pointer;">Siguiente</button>\n      </div>\n      <div style="margin-top:10px; color:#444; font-size:14px;">Competencia seleccionada: <strong>${competitionName}</strong></div>\n    ';
     const main = document.getElementById('main-content') || document.body;
     const stationSteps = main.querySelector('.station-steps');
     console.log('initStopwatch: stationSteps found=', !!stationSteps);
@@ -48,22 +77,35 @@ function initStopwatch(idx) {
       if (timerId) { clearInterval(timerId); timerId = null; }
       btnStart.disabled = false; btnStop.disabled = true;
       const name = input.value.trim() || 'Anónimo';
-      recordResult(name, idx, centis, formatTime(centis));
+      const competitionSelect = container.querySelector('#competition-select');
+      const competition = competitionSelect ? competitionSelect.value : competitionKey;
+      recordResult(name, idx, centis, formatTime(centis), competition);
     }
     btnStop.addEventListener('click', doStop);
     btnReset.addEventListener('click', () => { if (timerId) { clearInterval(timerId); timerId=null; } centis=0; disp.textContent='00:00:00'; btnStart.disabled=false; btnStop.disabled=true; });
-    btnNext.addEventListener('click', () => { doStop(); if (idx < 5) { const segs = window.location.pathname.split('/').filter(s => s.length>0); const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones'); const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/'; window.location.href = prefix + `estacion${idx+1}/index.html?recorrido=1`; } });
+    btnNext.addEventListener('click', () => {
+      doStop();
+      const nextIndex = idx + 1;
+      if (nextIndex <= stationLimit) {
+        const currentCompetition = container.querySelector('#competition-select')?.value || competitionKey;
+        const segs = window.location.pathname.split('/').filter(s => s.length>0);
+        const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
+        const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
+        const competitionQuery = currentCompetition ? `&competition=${currentCompetition}` : '';
+        window.location.href = prefix + `estacion${nextIndex}/index.html?recorrido=1${competitionQuery}`;
+      }
+    });
 
     disp.textContent = '00:00:00'; btnStop.disabled = true;
   } catch(e) { console.warn('initStopwatch failed',e); }
 }
 
-function recordResult(name, station, centis, timeStr) {
+function recordResult(name, station, centis, timeStr, competition) {
   try {
     const key = 'fc_results';
     const raw = localStorage.getItem(key);
     const list = raw ? JSON.parse(raw) : [];
-    const result = {name, station, centis, time: timeStr, ts: (new Date()).toISOString()};
+    const result = {name, station, competition: competition || getCompetitionFromUrl(), centis, time: timeStr, ts: (new Date()).toISOString()};
     list.push(result);
     localStorage.setItem(key, JSON.stringify(list));
     console.debug('Recorded result locally', name, station, timeStr);
@@ -96,7 +138,8 @@ function initializeStationPage() {
 
 // Helper function moved to top level
 function addStationNav(idx) {
-  const MAX_STATIONS = 5;
+  const competitionKey = getCompetitionFromUrl();
+  const MAX_STATIONS = getCompetitionStationLimit(competitionKey);
   // remove existing nav if any
   const existing = document.querySelector('.station-nav');
   if (existing) existing.remove();
@@ -111,7 +154,8 @@ function addStationNav(idx) {
       const segs = window.location.pathname.split('/').filter(s => s.length>0);
       const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
       const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
-      const target = prefix + `estacion${idx-1}/index.html?recorrido=1`;
+      const competitionQuery = competitionKey ? `&competition=${competitionKey}` : '';
+      const target = prefix + `estacion${idx-1}/index.html?recorrido=1${competitionQuery}`;
       window.location.href = target;
     }
   });
@@ -126,7 +170,8 @@ function addStationNav(idx) {
       const segs = window.location.pathname.split('/').filter(s => s.length>0);
       const estIndex = segs.findIndex(s => s.toLowerCase() === 'estaciones');
       const prefix = estIndex >= 0 ? '/' + segs.slice(0, estIndex+1).join('/') + '/' : '/Estaciones/';
-      const target = prefix + `estacion${idx+1}/index.html?recorrido=1`;
+      const competitionQuery = competitionKey ? `&competition=${competitionKey}` : '';
+      const target = prefix + `estacion${idx+1}/index.html?recorrido=1${competitionQuery}`;
       window.location.href = target;
     }
   });
