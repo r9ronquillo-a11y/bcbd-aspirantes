@@ -35,7 +35,7 @@
       head.appendChild(layout);
     })();
   </script>
-  <link rel="stylesheet" href="../../css/styles.css">
+  <link rel="stylesheet" href="../../../css/styles.css">
 </head>
 <body>
   <div id="header"></div>
@@ -55,7 +55,7 @@
     </section>
   </main>
   <div id="footer"></div>
-  <script src="../../js/layout.js"></script>
+  <script src="../../../js/layout.js"></script>
   <script>
     (function(){
       const GSHEET_URL = 'https://script.google.com/macros/s/AKfycbxAuEJeg7ET6gC1IFXDgASi1FsCKhlYyBx7EHB0W1TdD4rtb4e8z2hHbZGinI1xVbf24A/exec';
@@ -191,6 +191,24 @@
         return fallback;
       }
 
+      function getHeadersAndRows(data) {
+        if (!Array.isArray(data) || data.length < 2) return { headers: [], rows: [] };
+        if (Array.isArray(data[0])) {
+          return { headers: data[0].map(h => String(h || '')), rows: data.slice(1) };
+        }
+        if (data[0] && typeof data[0] === 'object') {
+          const headers = Object.keys(data[0]).map(h => String(h || ''));
+          return { headers, rows: data };
+        }
+        return { headers: [], rows: [] };
+      }
+
+      function getRowValue(row, index, headerName) {
+        if (Array.isArray(row)) return row[index];
+        if (row && typeof row === 'object') return row[headerName];
+        return undefined;
+      }
+      
       function loadAndRender(){
         const panel = document.getElementById('results-panel');
         panel.innerHTML = '<p style="text-align:center; color:#666;">Cargando resultados de la base de datos...</p>';
@@ -199,38 +217,35 @@
           .then(r => r.json())
           .then(data => {
             console.log('Data from Google Sheets:', data);
-            if (!Array.isArray(data) || data.length < 2) {
+            const { headers, rows } = getHeadersAndRows(data);
+            if (rows.length === 0) {
               panel.innerHTML = '<p style="text-align:center; color:#999;">No hay resultados registrados aún.</p>';
               return;
             }
-            const headers = Array.isArray(data[0]) ? data[0] : [];
             const nameIndex = findColumnIndex(headers, ['nombre', 'name'], 0);
             const stationIndex = findColumnIndex(headers, ['estación', 'estacion', 'station'], 1);
             const timeIndex = findColumnIndex(headers, ['tiempo', 'time', 'duration'], 2);
             const dateIndex = findColumnIndex(headers, ['fecha', 'timestamp', 'ts', 'date'], 3);
             const competitionIndex = findColumnIndex(headers, ['competencia', 'competition'], -1);
-            const results = data.slice(1).filter(row => Array.isArray(row) && row.length > Math.max(nameIndex, stationIndex, timeIndex, dateIndex, competitionIndex));
-            console.log('Row structure first result:', results[0]);
-            
-            if (results.length === 0) {
-              panel.innerHTML = '<p style="text-align:center; color:#999;">No hay resultados registrados aún.</p>';
-              return;
-            }
-            
-            const stationGroups = {};
+            const results = rows.filter(row => {
+              if (Array.isArray(row)) {
+                return row.length > Math.max(nameIndex, stationIndex, timeIndex, dateIndex, competitionIndex);
+              }
+              return row && typeof row === 'object';
+            });
             results.forEach(row => {
-              const name = String(row[nameIndex] ?? '').trim();
+              const name = String(getRowValue(row, nameIndex, headers[nameIndex]) ?? '').trim();
               if (!name) return;
-              const stationRaw = row[stationIndex];
+              const stationRaw = getRowValue(row, stationIndex, headers[stationIndex]);
               const stationKey = normalizeStation(stationRaw);
-              const competitionRaw = competitionIndex >= 0 ? row[competitionIndex] : '';
+              const competitionRaw = competitionIndex >= 0 ? getRowValue(row, competitionIndex, headers[competitionIndex]) : '';
               let competitionKey = normalizeCompetition(competitionRaw);
               if (!competitionKey) {
-                competitionKey = competitionFilter === 'copa-oba' ? '' : 'fire-challenge';
+                competitionKey = competitionFilter || '';
               }
               if (competitionFilter && competitionKey !== competitionFilter) return;
-              const timeStr = formatTimeForDisplay(row[timeIndex]);
-              const centis = parseTimeToCentis(row[timeIndex]);
+              const timeStr = formatTimeForDisplay(getRowValue(row, timeIndex, headers[timeIndex]));
+              const centis = parseTimeToCentis(getRowValue(row, timeIndex, headers[timeIndex]));
               if (!isFinite(centis)) return;
               const dateValue = row[dateIndex];
               const dateMillis = Date.parse(dateValue) || 0;

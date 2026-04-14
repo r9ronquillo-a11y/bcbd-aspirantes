@@ -82,7 +82,8 @@ function initStopwatch(idx) {
       btnStart.disabled = false; btnStop.disabled = true;
       const name = input.value.trim() || 'Anónimo';
       const competitionSelect = container.querySelector('#competition-select');
-      const competition = competitionSelect ? competitionSelect.value : competitionKey;
+      const competition = (competitionSelect && competitionSelect.value) ? competitionSelect.value : competitionKey || getCompetitionFromUrl();
+      console.debug('doStop competition:', competition, 'competitionKey:', competitionKey, 'url:', window.location.href);
       recordResult(name, idx, centis, formatTime(centis), competition);
     }
     btnStop.addEventListener('click', doStop);
@@ -109,15 +110,18 @@ function recordResult(name, station, centis, timeStr, competition) {
     const key = 'fc_results';
     const raw = localStorage.getItem(key);
     const list = raw ? JSON.parse(raw) : [];
-    const result = {name, station, competition: competition || getCompetitionFromUrl(), centis, time: timeStr, ts: (new Date()).toISOString()};
+    const finalCompetition = competition || getCompetitionFromUrl() || 'fire-challenge';
+    const result = {name, station, competition: finalCompetition, centis, time: timeStr, ts: (new Date()).toISOString()};
     list.push(result);
     localStorage.setItem(key, JSON.stringify(list));
-    console.debug('Recorded result locally', name, station, timeStr);
+    console.debug('Recorded result locally', name, station, timeStr, 'competition:', finalCompetition);
     
     // Send to Google Sheets
     const gsheetUrl = 'https://script.google.com/macros/s/AKfycbxAuEJeg7ET6gC1IFXDgASi1FsCKhlYyBx7EHB0W1TdD4rtb4e8z2hHbZGinI1xVbf24A/exec';
+    console.debug('recordResult payload:', result);
     fetch(gsheetUrl, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(result)
     })
     .then(r => r.json())
