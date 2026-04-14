@@ -1,0 +1,3 @@
+# Ignore OS generated thumbnail and metadata files
+Thumbs.db
+.DS_Store
