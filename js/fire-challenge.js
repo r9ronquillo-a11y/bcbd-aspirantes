@@ -111,10 +111,20 @@ function recordResult(name, station, centis, timeStr, competition) {
     const raw = localStorage.getItem(key);
     const list = raw ? JSON.parse(raw) : [];
     const finalCompetition = competition || getCompetitionFromUrl() || 'fire-challenge';
-    const result = {name, station, competition: finalCompetition, centis, time: timeStr, ts: (new Date()).toISOString()};
+    const competitionDisplay = getCompetitionDisplayName(finalCompetition);
+    const result = {
+      name,
+      station,
+      competition: finalCompetition,
+      competencia: competitionDisplay,
+      competition_key: finalCompetition,
+      centis,
+      time: timeStr,
+      ts: (new Date()).toISOString()
+    };
     list.push(result);
     localStorage.setItem(key, JSON.stringify(list));
-    console.debug('Recorded result locally', name, station, timeStr, 'competition:', finalCompetition);
+    console.debug('Recorded result locally', name, station, timeStr, 'competition:', finalCompetition, 'competencia:', competitionDisplay);
     
     // Send to Google Sheets
     const gsheetUrl = 'https://script.google.com/macros/s/AKfycbxAuEJeg7ET6gC1IFXDgASi1FsCKhlYyBx7EHB0W1TdD4rtb4e8z2hHbZGinI1xVbf24A/exec';
