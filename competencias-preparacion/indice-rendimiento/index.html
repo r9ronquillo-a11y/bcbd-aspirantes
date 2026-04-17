@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Índice de rendimiento | Competencias Preparación</title>
+    <script>
+        (function(){
+            var repoPrefix = location.hostname.includes('github.io') ? '/bcbd-aspirantes' : '';
+            var head = document.getElementsByTagName('head')[0];
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            var rel = '';
+            if (repoPrefix) {
+                link.href = repoPrefix + '/css/styles.css';
+            } else {
+                var segs = location.pathname.split('/').filter(Boolean);
+                var repoName = 'bcbd-aspirantes';
+                var repoIndex = segs.lastIndexOf(repoName);
+                var depth = 0;
+                if (repoIndex !== -1) {
+                    depth = segs.length - (repoIndex + 1);
+                    if (segs.length && segs[segs.length - 1].indexOf('.') !== -1) depth = Math.max(0, depth - 1);
+                } else {
+                    depth = segs.length;
+                    if (segs.length && segs[segs.length - 1].indexOf('.') !== -1) depth = Math.max(0, depth - 1);
+                }
+                rel = '../'.repeat(depth);
+                link.href = rel + 'css/styles.css';
+            }
+            head.appendChild(link);
+        })();
+    </script>
+    <link rel="stylesheet" href="../../css/styles.css">
+</head>
+
+<body>
+    <div id="header"></div>
+    <main id="main-content">
+        <section class="home-hero">
+            <div class="hero-inner">
+                <h1>Índice de rendimiento</h1>
+                <p class="lead">Próximamente: una página para analizar índices de rendimiento en competencias bomberiles.</p>
+            </div>
+        </section>
+
+        <section class="overview">
+            <h2>Placeholder</h2>
+            <p>Esta sección se ha reservado para el índice de rendimiento de las competencias. Aquí se podrá mostrar análisis y comparativas de desempeño por equipo y estación.</p>
+            <p>Regresa a la página principal para continuar navegando.</p>
+            <a class="card minimal" href="../index.html">
+                <h3>Volver a Preparación</h3>
+                <p>Regresa a la página principal de Competencias.</p>
+            </a>
+        </section>
+    </main>
+    <div id="footer"></div>
+    <script src="../../js/layout.js"></script>
+</body>
+
+</html>
